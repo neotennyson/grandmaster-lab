@@ -1,0 +1,13 @@
+import { chromium } from "playwright"
+const b = await chromium.launch()
+const p = await b.newPage({ viewport: { width: 1700, height: 1000 } })
+p.on("pageerror", (e) => console.log("PAGE ERROR:", e.message))
+await p.goto("http://localhost:5173", { waitUntil: "networkidle" })
+await p.waitForTimeout(700)
+await p.locator(".qp-btn", { hasText: "10 min" }).first().click()
+await p.waitForSelector(".board", { timeout: 6000 })
+await p.waitForTimeout(2000)
+const bd = await p.locator(".board").first().boundingBox()
+await p.screenshot({ path: `/tmp/cc-shots/neo3d-${Date.now()}.png`, clip: { x: bd.x, y: bd.y, width: bd.width, height: bd.height } })
+await b.close()
+console.log("done")
