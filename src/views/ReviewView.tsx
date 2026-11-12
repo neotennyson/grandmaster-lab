@@ -10,6 +10,7 @@ import { CoachAvatar, CoachBubble, XpHud } from "../components/Coach"
 import { coachOnReviewIntro, loadCoach, saveCoach, TITLES, levelOf, BADGES, unlockBadges, type ReactionTone } from "../lib/coach"
 import { emit } from "../lib/coachBus"
 import { playSound } from "../lib/coachSound"
+import { speak, stopSpeaking } from "../lib/voice"
 
 function resultLabel(result: string): string {
   if (result === "1-0") return "1-0 White wins"
@@ -104,6 +105,10 @@ export function ReviewView({
   const [walkIdx, setWalkIdx] = useState(0)
   const [coachTone, setCoachTone] = useState<ReactionTone>("lore")
   const [coachText, setCoachText] = useState<string>("Walking the game now — every position tells a story.")
+  useEffect(() => {
+    speak(coachText)
+    return () => stopSpeaking()
+  }, [coachText])
   const [coachXP, setCoachXP] = useState(loadCoach().xp)
   const coachProfileRef = useRef(loadCoach())
   const coachBadgeDone = useRef(false)
@@ -256,7 +261,9 @@ export function ReviewView({
 
   useEffect(() => {
     setWalkIdx(0)
-  }, [walkCat])
+    const first = tourList[0]
+    if (first) speak(first.comment)
+  }, [walkCat, tourList])
 
   const curWalk = tourList[Math.min(walkIdx, Math.max(0, tourList.length - 1))]
 
@@ -268,6 +275,7 @@ export function ReviewView({
       const n = walkIdx + 1
       setWalkIdx(n)
       walkJump(tourList[n])
+      speak(tourList[n].comment)
     }
   }
   function walkPrev() {
@@ -275,6 +283,7 @@ export function ReviewView({
       const prev = walkIdx - 1
       setWalkIdx(prev)
       walkJump(tourList[prev])
+      speak(tourList[prev].comment)
     }
   }
 

@@ -1,45 +1,46 @@
-# Gambit Academy
+# Grandmaster Lab
 
-A local-first chess training app built to sharpen one player against a maximum-strength engine — play, full game review, openings drilling, and the immortal games, in one dark, fast workspace. No accounts, no server: everything runs in your browser on your own CPU.
+**A chess app designed to take you to grandmaster — by making every game hyper-personalised, so you learn on the go.**
 
-![Gambit Academy](docs/screenshot-play.png)
+You don't get better at chess by playing anonymous games. You get better when every move you make is graded, explained, and turned into a lesson — while you're still in the position. That's what this is: a full chess workspace where a max-strength Stockfish plays you, a grandmaster coach watches every move, narrates your game out loud, and walks you through exactly what to fix the moment it's over.
 
-## Features
+![Play view](docs/screenshot-play.png)
 
-### Play
-- **Stockfish (WASM) at maximum strength** — Skill Level 20, thinking on your clock
-- Time controls: Bullet 1+0 · Blitz 3+0, 3+2, 5+0, 5+3 · Rapid 10+0, 10+5, 30+0 · Classical 60+0
-- Premoves, capture trays with material advantage (+N), live clocks, rating (Elo) that updates per game
-- Coach mode: a grandmaster character reacts to every move you make in real time (light engine probe grades each move), with flow combos, XP and badges
-- Wooden move/capture/check sounds (mute toggle)
+## How it teaches you
 
-### Game Review
-- Full post-game analysis: **accuracy %, average centipawn loss, and every move classified** — Brilliant, Great, Best, Excellent, Good, Book, Inaccuracy, Mistake, Blunder, Forced
-- Eval bar + clickable eval graph with mistake dots
-- Best-move arrows, engine lines, per-move coach comments
-- **Category table** (per side) and a **guided walkthrough** of each classification — step through every Brilliant, every Blunder, and everything in between
-- Auto-opens after each game; the final position stays visible behind the result banner
+### Every game is a lesson
+- **Stockfish WASM at maximum strength** (Skill 20, thinking on your own clock) — bullet 1+0 to classical 60+0
+- Premoves, capture trays with material count, live clocks, and a real Elo rating that moves with every result
+- **The coach calls your moves as they happen** — light engine probes grade each move in real time, and Elias Thorne reacts out loud (speech synthesis) and in the chat strip: hype when you're flowing, fire when you blunder, calm when you're winning
 
-### Openings Lab
-- 145 validated ECO opening lines; drill them with instant book-move validation
+### Every review is a debrief
+- The moment your game ends, a full review opens: **accuracy %, average centipawn loss, every move classified** — Brilliant, Great, Best, Excellent, Good, Book, Inaccuracy, Mistake, Blunder, Forced
+- Eval bar + clickable eval graph with mistake dots, best-move arrows, engine lines
+- **Category walkthrough**: step through every Brilliant, every Blunder, everything in between — and Elias narrates each step aloud
+- Coaches you on *your* side of the board: the review is personalised to the color you played
+
+### Every opening is drilled, not memorised
+- **Openings Lab**: 145 validated ECO lines with instant book-move validation
 - Learn mode shows the expected move; Pro mode rejects slips
 
-### Master Vault
-- Five immortal games (Opera Game, Immortal Game, Byrne–Fischer 1956, Fischer–Spassky 1972 Game 6, Kasparov–Topalov 1999) with verified scores
-- Step through with keyboard navigation and ask the engine about any position
+### Every immortal is a lesson
+- **Master Vault**: Opera Game, Immortal Game, Byrne–Fischer 1956, Fischer–Spassky 1972 Game 6, Kasparov–Topalov 1999 — hand-verified scores
+- Ask the engine about any position while you step through history
 
-### Progression
-- XP + 11 rank titles (Pawn of the War Room → Grandmaster's Blade → Thorne's Equal)
-- 12 badges, Elo rating with peak tracking, cross-game classification history
+### Progress that compounds
+- XP, 11 rank titles (Pawn of the War Room → Thorne's Equal), 12 badges, Elo with peak tracking, cross-game classification history
 - Daily puzzle mined from the immortal games
+
+![Home view](docs/screenshot-home.png)
 
 ## Stack
 
 - React 19 + TypeScript + Vite
 - [chess.js](https://github.com/jhlywa/chess.js) for rules
-- [Stockfish](https://github.com/nmrugg/stockfish.js) WASM running in Web Workers (two instances: gameplay + live coach probe)
+- [Stockfish](https://github.com/nmrugg/stockfish.js) WASM in Web Workers (gameplay + a live coach probe)
+- Web Speech API for the coach's voice (British male voice when available, mute toggle)
 - Hand-rolled board renderer (drag/click, premove arrows, animations, captured trays)
-- Everything persists in `localStorage` — no backend, no telemetry
+- Everything persists in `localStorage` — no backend, no accounts, no telemetry
 
 ## Run it
 
@@ -59,14 +60,14 @@ node scripts/validate-masters.mjs  # validate master game scores
 node tools/render-set.mjs <set>    # swap the piece set from tools/sets/<set>/*.svg
 ```
 
-The interaction/leak suites need `npx playwright install chromium` once.
+The browser suites need `npx playwright install chromium` once.
 
 ## Credits
 
 - **Stockfish** — the engine, via [nmrugg/stockfish.js](https://github.com/nmrugg/stockfish.js) (GPL). Built by the Stockfish developers.
-- **Piece sets** — "Staunty" and "Companion" from the [Lichess open-source project](https://github.com/lichess-org/lila/tree/master/public/piece) (lichess.org). Licensed for non-commercial use with attribution; see the license notes in the lila repository.
+- **Piece sets** — "Staunty" and "Companion" from the [Lichess open-source project](https://github.com/lichess-org/lila/tree/master/public/piece) (lichess.org). Non-commercial use with attribution; see the license notes in the lila repository.
 - **Move/capture sounds** — from the [Lichess sound set](https://github.com/lichess-org/lila/tree/master/public/sound/standard).
-- **Coach portrait** — [DiceBear Personas](https://www.dicebear.com/styles/personas/) by Draftbit (CC BY 4.0).
+- **Coach portrait** — [Open Peeps](https://www.openpeeps.com/) by Pablo Stanley (CC0, public domain), generated via DiceBear.
 - **Noto Sans** — Google Fonts (OFL).
 - **chess.js** — BSD-2-Clause.
 
@@ -74,4 +75,4 @@ The interaction/leak suites need `npx playwright install chromium` once.
 
 GPL-3.0 — required by the bundled Stockfish engine. See [LICENSE](LICENSE).
 
-Not affiliated with chess.com. The dark UI is an original implementation inspired by the layout conventions of modern chess sites.
+Full asset attributions in [CREDITS.md](CREDITS.md). Not affiliated with chess.com.

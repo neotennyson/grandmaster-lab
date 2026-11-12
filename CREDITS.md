@@ -15,7 +15,8 @@ Code in this repository is GPL-3.0 (see [LICENSE](LICENSE)). The bundled third-p
 
 ## Coach portrait
 
-- Generated with [DiceBear](https://www.dicebear.com/) — **Personas** style by Draftbit (CC BY 4.0), via the DiceBear HTTP API. The generated SVG is bundled locally at `public/avatar/elias.svg`.
+- [Open Peeps](https://www.openpeeps.com/) by Pablo Stanley — **CC0 1.0 (public domain)**, no rights reserved. Generated via the DiceBear HTTP API (Open Peeps style); the SVG is bundled locally at `public/avatar/elias.svg`.
+- The coach's **voice** uses the browser's built-in Web Speech API (`speechSynthesis`) — no audio files, no cloud service.
 
 ## Chess engine
 
