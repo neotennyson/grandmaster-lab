@@ -3,9 +3,11 @@ import { Chess } from "chess.js"
 import { openingFamilies } from "../lib/openings"
 import { Board } from "../components/Board"
 import { bumpMastery, loadMastery, loadGames } from "../lib/store"
-import { loadCoach, saveCoach, BADGES } from "../lib/coach"
+import { loadCoach, saveCoach, BADGES, coachDrillIntro, coachOnDrillMove, coachOnOpeningLine, type CoachReaction } from "../lib/coach"
 import { emit } from "../lib/coachBus"
 import { playSound } from "../lib/coachSound"
+import { CoachAvatar, CoachBubble } from "../components/Coach"
+import { speak, stopSpeaking } from "../lib/voice"
 
 export function OpeningsView() {
   const families = useMemo(() => openingFamilies(), [])
@@ -21,6 +23,10 @@ export function OpeningsView() {
   const completedRef = useRef("")
   const [selSq, setSelSq] = useState<string | null>(null)
   void selSq
+  const [coachMsg, setCoachMsg] = useState<CoachReaction>({ tone: "lore", text: "Pick a family, pick a line, and play it against me. I grade every move." })
+  useEffect(() => {
+    return () => stopSpeaking()
+  }, [])
 
   const family = families.find((f) => f.key === familyKey) ?? families[0]
   const entries = family?.lines ?? []
@@ -86,9 +92,15 @@ export function OpeningsView() {
       setStep((s) => s + 1)
       setFlash({ kind: "ok", text: "Book move. Committed." })
       playSound("click")
+      const r = coachOnDrillMove({ san: mv.san, correct: true, name: entry.name })
+      setCoachMsg(r)
+      speak(r.text, r.key)
     } else if (expectedNext.length) {
       setMistakes((m) => m + 1)
       setFlash({ kind: "bad", text: `Not the book move here. The line plays ${expectedNext[0].san}.` })
+      const r = coachOnDrillMove({ san: expectedNext[0].san, correct: false, name: entry.name })
+      setCoachMsg(r)
+      speak(r.text, r.key)
     }
   }
 
@@ -118,6 +130,9 @@ export function OpeningsView() {
     if (completedRef.current === key) return
     completedRef.current = key
     const clean = mistakes === 0
+    const sayLine = coachOnOpeningLine({ name: entry.name, clean })
+    setCoachMsg(sayLine)
+    speak(sayLine.text, sayLine.key)
     bumpMastery(entry.name)
     setMasteryBumped(loadMastery())
     setFlash({
@@ -141,6 +156,13 @@ export function OpeningsView() {
     playSound(clean ? "win" : "praise")
   }, [step, entry, mistakes])
 
+  function resetCoach(line: { name: string } | null) {
+    if (!line) return
+    const r = coachDrillIntro({ name: line.name })
+    setCoachMsg(r)
+    speak(r.text, r.key)
+  }
+
   function selectFamily(key: string) {
     setFamilyKey(key)
     setLineIdx(0)
@@ -149,6 +171,8 @@ export function OpeningsView() {
     setFlash(null)
     completedRef.current = ""
     setSelSq(null)
+    const fam = families.find((f) => f.key === key)
+    resetCoach(fam?.lines[0] ?? null)
   }
 
   function selectLine(i: number) {
@@ -158,6 +182,7 @@ export function OpeningsView() {
     setFlash(null)
     completedRef.current = ""
     setSelSq(null)
+    resetCoach(entries[Math.min(i, Math.max(0, entries.length - 1))] ?? null)
   }
 
   const revealedMoves = useMemo(() => {
@@ -219,10 +244,19 @@ export function OpeningsView() {
                 setFlash(null)
                 completedRef.current = ""
                 setSelSq(null)
+                resetCoach(entry)
               }}
             >
               restart
             </button>
+          </div>
+        </div>
+
+        <div className="coach-strip drills-strip">
+          <CoachAvatar size={26} />
+          <div className="coach-strip-txt">
+            <b>ELIAS</b>
+            <CoachBubble tone={coachMsg.tone} text={coachMsg.text} compact />
           </div>
         </div>
 

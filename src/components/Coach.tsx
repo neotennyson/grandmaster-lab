@@ -6,7 +6,7 @@ import { playSound } from "../lib/coachSound"
 export function CoachAvatar({ size = 46 }: { size?: number }) {
   return (
     <span className="elias-avatar" style={{ width: size, height: size }} aria-label="Elias Thorne">
-      <img src="/avatar/elias.svg" alt="" draggable={false} />
+      <img src="/avatar/elias.jpg" alt="" draggable={false} />
     </span>
   )
 }

@@ -15,8 +15,12 @@ Code in this repository is GPL-3.0 (see [LICENSE](LICENSE)). The bundled third-p
 
 ## Coach portrait
 
-- [Open Peeps](https://www.openpeeps.com/) by Pablo Stanley — **CC0 1.0 (public domain)**, no rights reserved. Generated via the DiceBear HTTP API (Open Peeps style); the SVG is bundled locally at `public/avatar/elias.svg`.
-- The coach's **voice** uses the browser's built-in Web Speech API (`speechSynthesis`) — no audio files, no cloud service.
+- AI-generated digital painting produced with the open [Pollinations.ai](https://pollinations.ai) image API. Bundled locally at `public/avatar/elias.jpg`.
+
+## Coach voice
+
+- Pre-rendered with [Kokoro TTS](https://github.com/hexgrad/kokoro) (Apache-2.0), British male `bm_fable` voice. 64 narrated clips + `manifest.json` bundled locally at `public/voice/`. Regenerate with `scripts/gen_voice.py` (requires the Python `kokoro` package).
+- The browser's built-in speech synthesis (`speechSynthesis`) is the fallback for dynamic lines; no cloud calls are made at runtime.
 
 ## Chess engine
 

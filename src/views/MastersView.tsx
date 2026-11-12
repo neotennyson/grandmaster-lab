@@ -4,11 +4,11 @@ import { MASTER_GAMES, type MasterGame } from "../lib/masters"
 import { Board, type ArrowSpec } from "../components/Board"
 import { Engine } from "../lib/engine"
 import { uciToCoords, pvToSANs, winPct } from "../lib/analysis"
-import { loadCoach, saveCoach, BADGES } from "../lib/coach"
+import { loadCoach, saveCoach, BADGES, coachOnMasterIntro, coachOnMasterMove, type CoachReaction } from "../lib/coach"
 import { emit } from "../lib/coachBus"
 import { playSound } from "../lib/coachSound"
 import { CoachAvatar, CoachBubble } from "../components/Coach"
-import { coachOnMasterIntro } from "../lib/coach"
+import { speak, stopSpeaking } from "../lib/voice"
 
 export function MastersView() {
   const [openGameId, setOpenGameId] = useState<string | null>(null)
@@ -77,11 +77,52 @@ function MasterReader({ game, onBack }: { game: MasterGame; onBack: () => void }
   }, [game.pgn])
 
   const [idx, setIdx] = useState(0)
+  const [coachMsg, setCoachMsg] = useState<CoachReaction>(() =>
+    coachOnMasterIntro({ title: game.title, players: `${game.white} — ${game.black}` }),
+  )
   const [engine, setEngine] = useState<Engine | null>(null)
   const [analysing, setAnalysing] = useState(false)
   const [probe, setProbe] = useState<{ best: string; to: string; from: string; pv: string[]; cp: number } | null>(null)
   const awardedRef = useRef(false)
   const visitedRef = useRef<Set<number>>(new Set())
+
+  useEffect(() => {
+    speak(coachMsg.text, coachMsg.key)
+    return () => stopSpeaking()
+  }, [coachMsg])
+
+  useEffect(() => {
+    if (idx === 0) {
+      const intro = coachOnMasterIntro({ title: game.title, players: `${game.white} — ${game.black}` })
+      setCoachMsg(intro)
+      return
+    }
+    const san = sans[idx - 1]
+    if (!san) return
+    const c = new Chess()
+    for (let i = 0; i < idx - 1; i++) {
+      try {
+        c.move(sans[i])
+      } catch {
+        return
+      }
+    }
+    let verbose: { flags: string; san: string } | null = null
+    try {
+      verbose = c.move(san) as unknown as { flags: string; san: string }
+    } catch {
+      return
+    }
+    if (!verbose) return
+    const r = coachOnMasterMove({
+      san,
+      ply: idx,
+      isCapture: verbose.flags.includes("c") || verbose.flags.includes("e"),
+      isCheck: verbose.flags.includes("+"),
+      isMate: verbose.flags.includes("#"),
+    })
+    setCoachMsg(r)
+  }, [idx, sans, game.title, game.white, game.black])
 
   useEffect(() => {
     visitedRef.current.add(idx)
@@ -191,7 +232,7 @@ function MasterReader({ game, onBack }: { game: MasterGame; onBack: () => void }
         </div>
         <div className="coach-row reader-coach">
           <CoachAvatar size={38} />
-          <CoachBubble tone="lore" text={coachOnMasterIntro({ title: game.title, players: `${game.white} — ${game.black}` }).text} />
+          <CoachBubble tone={coachMsg.tone} text={coachMsg.text} compact />
         </div>
       </div>
       <div className="reader-grid">

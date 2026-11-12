@@ -24,7 +24,7 @@ import {
 } from "../lib/coach"
 import { emit } from "../lib/coachBus"
 import { playSound } from "../lib/coachSound"
-import { speak, stopSpeaking } from "../lib/voice"
+import { stopSpeaking } from "../lib/voice"
 import { CoachAvatar, CoachBubble } from "../components/Coach"
 import { ClockFace, ClockTicker } from "../components/ClockFace"
 import { IconTarget, IconPlusSquare, IconBoard, IconUsers, IconFlag, IconInfo, IconSwap, IconFirst, IconPrev, IconPlay, IconLast, IconPawn } from "../components/icons"
@@ -84,9 +84,8 @@ export function PlayView({
   const [coachTone, setCoachTone] = useState<ReactionTone>("hype")
   const [coachText, setCoachText] = useState<string>(() => coachGreet())
   useEffect(() => {
-    speak(coachText)
     return () => stopSpeaking()
-  }, [coachText])
+  }, [])
   const flowRef = useRef(0)
   const [, setCoachProfile] = useState(loadCoach)
   const coachProfileRef = useRef(loadCoach())
@@ -151,8 +150,7 @@ export function PlayView({
 
   useEffect(() => {
     const s = coachStart({ tcId: settings.tcId })
-    setCoachTone(s.tone)
-    setCoachText(s.text)
+    say(s.tone, s.text)
     endedForRef.current = ""
   }, [settings.tcId, settings.myColor])
 

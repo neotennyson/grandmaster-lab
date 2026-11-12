@@ -137,15 +137,26 @@ export function unlockBadges(profile: CoachProfile, ctx: {
 
 export type ReactionTone = "praise" | "note" | "warn" | "fire" | "lore" | "calm" | "hype"
 
+export interface CoachReaction {
+  tone: ReactionTone
+  text: string
+  key?: string
+}
+
 export interface CoachLine {
   tone: ReactionTone
   text: (v: Record<string, string | number>) => string
+  key?: string
 }
 
 const pick = <T,>(arr: T[], seed = Math.random()): T => arr[Math.floor(seed * arr.length) % arr.length]
 
-function render(line: CoachLine, vars: Record<string, string | number> = {}): { tone: ReactionTone; text: string } {
-  return { tone: line.tone, text: line.text(vars) }
+function mkPool(name: string, lines: Array<[ReactionTone, (v: Record<string, string | number>) => string]>): CoachLine[] {
+  return lines.map(([tone, text], i) => ({ tone, text, key: `${name}:${i}` }))
+}
+
+function render(line: CoachLine, vars: Record<string, string | number> = {}): CoachReaction {
+  return { tone: line.tone, text: line.text(vars), key: line.key }
 }
 
 export interface MoveVerdict {
@@ -158,31 +169,31 @@ export interface MoveVerdict {
   isCheck: boolean
 }
 
-const PRAISE_HIGH: CoachLine[] = [
-  { tone: "hype", text: (v) => `That's chess from the atlas. ${v.combo} now in flow — I can't improve on ${v.mySAN}, and I don't try.` },
-  { tone: "hype", text: (v) => `${v.mySAN}. Engine-grade. Streak: ${v.combo}. Keep the pressure like this and the machine starts doubting itself.` },
-  { tone: "praise", text: (v) => `Best move on the board — flow ${v.combo}. This is the version of you I'm building.` },
-]
+const PRAISE_HIGH: CoachLine[] = mkPool("praise_high", [
+  ["hype", (v) => `That's chess from the atlas. ${v.combo} now in flow — I can't improve on ${v.mySAN}, and I don't try.`],
+  ["hype", (v) => `${v.mySAN}. Engine-grade. Streak: ${v.combo}. Keep the pressure like this and the machine starts doubting itself.`],
+  ["praise", (v) => `Best move on the board — flow ${v.combo}. This is the version of you I'm building.`],
+])
 
-const PRAISE: CoachLine[] = [
-  { tone: "praise", text: (v) => `${v.mySAN}? Clean. ${v.combo} strong in a row.` },
-  { tone: "praise", text: (v) => `Solid linework. ${v.combo} clean cuts so far.` },
-]
+const PRAISE: CoachLine[] = mkPool("praise", [
+  ["praise", (v) => `${v.mySAN}? Clean. ${v.combo} strong in a row.`],
+  ["praise", (v) => `Solid linework. ${v.combo} clean cuts so far.`],
+])
 
 const NEUTRAL: CoachLine[] = [
   { tone: "note", text: () => `Playable. But the sharper move existed — file it for the report.` },
   { tone: "note", text: () => `Okay. Not what I'd have chosen, but nothing breaks.` },
 ]
 
-const SOFT_WARN: CoachLine[] = [
-  { tone: "warn", text: (v) => `Loose. ${v.bestSAN} would have gripped harder.` },
-  { tone: "warn", text: (v) => `You slipped some pressure — the report will babble about ${v.bestSAN} anyway.` },
-]
+const SOFT_WARN: CoachLine[] = mkPool("warn", [
+  ["warn", (v) => `Loose. ${v.bestSAN} would have gripped harder.`],
+  ["warn", (v) => `You slipped some pressure — the report will babble about ${v.bestSAN} anyway.`],
+])
 
-const HARD_WARN: CoachLine[] = [
-  { tone: "fire", text: (v) => `No. ${v.bestSAN} was the move. Park this one — the report will turn it into a lesson.` },
-  { tone: "fire", text: (v) => `That leaks blood. The thread was ${v.bestSAN}. We will autopsy it after the game.` },
-]
+const HARD_WARN: CoachLine[] = mkPool("fire", [
+  ["fire", (v) => `No. ${v.bestSAN} was the move. Park this one — the report will turn it into a lesson.`],
+  ["fire", (v) => `That leaks blood. The thread was ${v.bestSAN}. We will autopsy it after the game.`],
+])
 
 const CAPTURES: CoachLine[] = [
   { tone: "lore", text: () => `Material is just a bookkeeping detail — Tal would trade anything for this initiative. Snap it with purpose.` },
@@ -220,7 +231,7 @@ export interface GameEndCtx {
   myAcc: number | null
 }
 
-export function coachStart(ctx: { tcId: string }): { tone: ReactionTone; text: string } {
+export function coachStart(ctx: { tcId: string }): CoachReaction {
   if (ctx.tcId === "1|0") return render(pick(BULLET_OPEN))
   return render(pick(OPENING_START))
 }
@@ -233,7 +244,7 @@ export function coachGreet(): string {
   ])
 }
 
-export function coachOnYourMove(v: MoveVerdict, coachMode: boolean): { tone: ReactionTone; text: string } | null {
+export function coachOnYourMove(v: MoveVerdict, coachMode: boolean): CoachReaction | null {
   if (coachMode) {
     if (["brilliant", "great", "best", "excellent"].includes(v.cls)) {
       return render(v.combo >= 4 ? pick(PRAISE_HIGH) : pick(PRAISE), {
@@ -246,12 +257,12 @@ export function coachOnYourMove(v: MoveVerdict, coachMode: boolean): { tone: Rea
       return render(v.combo >= 3 ? pick(PRAISE) : pick(NEUTRAL), { mySAN: v.mySAN, combo: v.combo, bestSAN: v.bestSAN })
     if (v.cls === "inaccuracy") {
       return v.combo >= 3
-        ? { tone: "warn", text: `Streak ends at ${v.combo}. ${v.bestSAN} kept it stronger — small cost.` }
+        ? { tone: "warn", key: "warn_streak", text: `Streak ends at ${v.combo}. ${v.bestSAN} kept it stronger — small cost.` }
         : render(pick(SOFT_WARN), { mySAN: v.mySAN, combo: v.combo, bestSAN: v.bestSAN })
     }
     if (v.cls === "mistake") return render(pick(HARD_WARN), { mySAN: v.mySAN, combo: 0, bestSAN: v.bestSAN })
     if (v.cls === "blunder")
-      return { tone: "fire", text: `Blunder — ${v.bestSAN} was the spine of the position. Hold steady; the report will make this a weapon.` }
+      return { tone: "fire", key: "fire_blunder", text: `Blunder — ${v.bestSAN} was the spine of the position. Hold steady; the report will make this a weapon.` }
   } else {
     if (["brilliant", "great", "best"].includes(v.cls))
       return render(pick(PRAISE), { mySAN: v.mySAN, combo: v.combo, bestSAN: v.bestSAN })
@@ -261,7 +272,7 @@ export function coachOnYourMove(v: MoveVerdict, coachMode: boolean): { tone: Rea
   return null
 }
 
-export function coachOnBotMove(ctx: { isCapture: boolean; isCheck: boolean; timeLow: boolean; mvSAN: string }): { tone: ReactionTone; text: string } | null {
+export function coachOnBotMove(ctx: { isCapture: boolean; isCheck: boolean; timeLow: boolean; mvSAN: string }): CoachReaction | null {
   if (ctx.timeLow) return render(pick(TIME_PRESSURE))
   if (ctx.isCapture)
     return { tone: "note", text: `He took something? Recalculate — safety or payback, pick a lane.` }
@@ -270,7 +281,7 @@ export function coachOnBotMove(ctx: { isCapture: boolean; isCheck: boolean; time
   return null
 }
 
-export function coachOnEnd(ctx: GameEndCtx): { tone: ReactionTone; text: string } {
+export function coachOnEnd(ctx: GameEndCtx): CoachReaction {
   if (ctx.draw)
     return { tone: "calm", text: `Even swords. Walking away whole from a perfect engine is a badge of a different shape.` }
   if (ctx.won)
@@ -278,40 +289,43 @@ export function coachOnEnd(ctx: GameEndCtx): { tone: ReactionTone; text: string 
       tone: "hype",
       text: `YOU beat the strongest engine alive. Whatever nerves you had before this session — delete them. This goes in the vault.`,
     }
-  const graded =
+  const graded: CoachReaction =
     (ctx.myAcc ?? 0) >= 85
-      ? `You played at ${ctx.myAcc ?? "??"}% and still fell — that's the machine being the machine. We expand from here.`
+      ? { tone: "calm", key: "end_calm:0", text: `You played at ${ctx.myAcc ?? "??"}% and still fell — that's the machine being the machine. We expand from here.` }
       : (ctx.myAcc ?? 0) >= 70
-        ? `${ctx.myAcc ?? "??"}% accuracy, real combat. The report is your gym — study one blunder only. Force: what did it punish?`
-        : `Intense defeat — rich study material. Open the review; I'll mark every fault and we'll fix two today, not twenty.`
-  return { tone: "calm", text: graded }
+        ? { tone: "calm", key: "end_calm:1", text: `${ctx.myAcc ?? "??"}% accuracy, real combat. The report is your gym — study one blunder only. Force: what did it punish?` }
+        : { tone: "calm", key: "end_calm:2", text: `Intense defeat — rich study material. Open the review; I'll mark every fault and we'll fix two today, not twenty.` }
+  return graded
 }
 
-export function coachOnReviewIntro(ctx: { acc: number; opening: string | null; worstCls: string }): { tone: ReactionTone; text: string } {
+export function coachOnReviewIntro(ctx: { acc: number; opening: string | null; worstCls: string }): CoachReaction {
   if (ctx.acc >= 90)
-    return { tone: "hype", text: `${ctx.acc}% — clinical. ${ctx.opening ? `The ${ctx.opening} suited you.` : ""} Let's find the last 10%.` }
+    return { tone: "hype", key: "intro_hype", text: `${ctx.acc}% — clinical. ${ctx.opening ? `The ${ctx.opening} suited you.` : ""} Let's find the last 10%.` }
   if (ctx.acc >= 75)
-    return { tone: "praise", text: `${ctx.acc}%. A fighter's game. We fix ${ctx.worstCls === "blunder" ? "the blunders" : "the leaks"} and you're crossing 85 next time.` }
+    return { tone: "praise", key: "intro_praise", text: `${ctx.acc}%. A fighter's game. We fix ${ctx.worstCls === "blunder" ? "the blunders" : "the leaks"} and you're crossing 85 next time.` }
   if (ctx.acc >= 50)
-    return { tone: "praise", text: `${ctx.acc}% — honest numbers. The report is your temple now; this is where you grow fastest.` }
+    return { tone: "praise", key: "intro_praise", text: `${ctx.acc}% — honest numbers. The report is your temple now; this is where you grow fastest.` }
   return {
     tone: "calm",
+    key: "intro_calm",
     text: `${ctx.acc}%. That's a full book Ten days of study compressed into one score — walk the report with me, no shame in any of it.`,
   }
 }
 
-export function coachOnOpeningLine(ctx: { name: string; clean: boolean }): { tone: ReactionTone; text: string } {
+export function coachOnOpeningLine(ctx: { name: string; clean: boolean }): CoachReaction {
   if (!ctx.clean)
-    return { tone: "note", text: `${ctx.name} — with slips. Run it again without my arrows; mastery is playing blind and still being right.` }
+    return { tone: "note", key: "opening_slip", text: `${ctx.name} — with slips. Run it again without my arrows; mastery is playing blind and still being right.` }
   return {
     tone: "hype",
+    key: "opening_clean",
     text: `${ctx.name}, clean. That line now lives in you — opponents will donate pieces to it.`,
   }
 }
 
-export function coachOnMasterIntro(ctx: { title: string; players: string }): { tone: ReactionTone; text: string } {
+export function coachOnMasterIntro(ctx: { title: string; players: string }): CoachReaction {
   return {
     tone: "lore",
+    key: "master_intro",
     text: `${ctx.title} — ${ctx.players}. On this board, every move is a philosophy. Watch where the pieces are sent, not just where they go.`,
   }
 }
@@ -326,7 +340,7 @@ export function xpForGame(ctx: { won: boolean; draw: boolean; tcId: string }): n
   return 25
 }
 
-export function coachOnZen(xp: number): { tone: ReactionTone; text: string } {
+export function coachOnZen(xp: number): CoachReaction {
   void xp
   return { tone: "lore", text: pick([
     `Chess is 99% technique, 1% imagination — but the 1% votes first.`,
@@ -335,4 +349,46 @@ export function coachOnZen(xp: number): { tone: ReactionTone; text: string } {
     `Tactics flow from a superior position. Make the ground fertile, then harvest.`,
     `A blunder is data wearing a costume. Undress it in the report and it becomes strength.`,
   ]) }
+}
+
+export function coachDrillIntro(ctx: { name: string }): CoachReaction {
+  return {
+    tone: "lore",
+    key: "drill_intro",
+    text: `The ${ctx.name}. Follow the arrows and play the book moves — I'll call every one.`,
+  }
+}
+
+export function coachOnDrillMove(ctx: { san: string; correct: boolean; name: string }): CoachReaction {
+  if (ctx.correct) {
+    const variants: CoachReaction[] = [
+      { tone: "praise", key: "drill_book:0", text: `Book. ${ctx.san} — the theory approves.` },
+      { tone: "hype", key: "drill_book:1", text: `${ctx.san}. Exactly what the line wants. Keep the rhythm.` },
+      { tone: "praise", key: "drill_book:2", text: `Book move. ${ctx.name} is taking shape on the board.` },
+    ]
+    return variants[Math.floor(Math.random() * variants.length)]
+  }
+  return {
+    tone: "warn",
+    key: "drill_slip",
+    text: `Off book. The line plays ${ctx.san} here — reset the pattern.`,
+  }
+}
+
+export function coachOnMasterMove(ctx: { san: string; ply: number; isCapture: boolean; isCheck: boolean; isMate: boolean }): CoachReaction {
+  const n = Math.ceil(ctx.ply / 2)
+  const side = ctx.ply % 2 === 1 ? "White" : "Black"
+  if (ctx.isMate)
+    return { tone: "fire", key: "master_move:3", text: `${side} mates with ${ctx.san} — study how every move before this drove it home.` }
+  if (ctx.isCheck && ctx.isCapture)
+    return { tone: "hype", key: "master_move:2", text: `${n}. ${ctx.san} — a check that takes material. The old masters loved a double blow.` }
+  if (ctx.isCapture)
+    return { tone: "lore", key: "master_move:1", text: `${n}. ${ctx.san} — material changes hands. Watch whether it was a trade or a theft.` }
+  if (ctx.isCheck)
+    return { tone: "note", key: "master_move:1", text: `${n}. ${ctx.san} — a question mark of a move. The answer comes two moves later; watch for it.` }
+  return {
+    tone: "lore",
+    key: `master_move:${ctx.ply % 2}`,
+    text: `${n}. ${ctx.san} — a quiet move doing loud work. Follow what it sets up.`,
+  }
 }

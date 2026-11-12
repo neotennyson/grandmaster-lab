@@ -105,10 +105,11 @@ export function ReviewView({
   const [walkIdx, setWalkIdx] = useState(0)
   const [coachTone, setCoachTone] = useState<ReactionTone>("lore")
   const [coachText, setCoachText] = useState<string>("Walking the game now — every position tells a story.")
+  const [coachKey, setCoachKey] = useState<string | null>(null)
   useEffect(() => {
-    speak(coachText)
+    speak(coachText, coachKey)
     return () => stopSpeaking()
-  }, [coachText])
+  }, [coachText, coachKey])
   const [coachXP, setCoachXP] = useState(loadCoach().xp)
   const coachProfileRef = useRef(loadCoach())
   const coachBadgeDone = useRef(false)
@@ -149,6 +150,7 @@ export function ReviewView({
         .sort((a, b) => b.wpAfter - b.wpBefore - (a.wpAfter - a.wpBefore))[0]?.cls ?? "inaccuracy",
     })
     setCoachTone(intro.tone)
+    setCoachKey(intro.key ?? null)
     setCoachText(
       `${intro.text} • ${
         vocabLesson(rep, game.myColor) ??
@@ -262,7 +264,7 @@ export function ReviewView({
   useEffect(() => {
     setWalkIdx(0)
     const first = tourList[0]
-    if (first) speak(first.comment)
+    if (first) speak(first.comment, `walk_${first.cls}`)
   }, [walkCat, tourList])
 
   const curWalk = tourList[Math.min(walkIdx, Math.max(0, tourList.length - 1))]
@@ -275,7 +277,7 @@ export function ReviewView({
       const n = walkIdx + 1
       setWalkIdx(n)
       walkJump(tourList[n])
-      speak(tourList[n].comment)
+      speak(tourList[n].comment, `walk_${tourList[n].cls}`)
     }
   }
   function walkPrev() {
@@ -283,7 +285,7 @@ export function ReviewView({
       const prev = walkIdx - 1
       setWalkIdx(prev)
       walkJump(tourList[prev])
-      speak(tourList[prev].comment)
+      speak(tourList[prev].comment, `walk_${tourList[prev].cls}`)
     }
   }
 
