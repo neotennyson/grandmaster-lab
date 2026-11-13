@@ -2,10 +2,24 @@ import { useEffect, useRef, useState } from "react"
 import { levelProgress } from "../lib/coach"
 import { onBus, type BusEvent } from "../lib/coachBus"
 import { playSound } from "../lib/coachSound"
+import { stopSpeaking } from "../lib/voice"
 
 export function CoachAvatar({ size = 46 }: { size?: number }) {
+  const [speaking, setSpeaking] = useState(false)
+
+  useEffect(() => {
+    const onVoiceState = (event: Event) => setSpeaking((event as CustomEvent<boolean>).detail)
+    window.addEventListener("gambit:voice-state", onVoiceState)
+    return () => window.removeEventListener("gambit:voice-state", onVoiceState)
+  }, [])
+
   return (
-    <span className="elias-avatar" style={{ width: size, height: size }} aria-label="Elias Thorne">
+    <span
+      className={`elias-avatar${speaking ? " is-speaking" : ""}`}
+      style={{ width: size, height: size }}
+      aria-label={speaking ? "Elias Thorne speaking" : "Elias Thorne"}
+      data-speaking={speaking}
+    >
       <img src="/avatar/elias.jpg" alt="" draggable={false} />
     </span>
   )
@@ -117,7 +131,8 @@ function SoundSwitch() {
       onClick={() => {
         setOn(!on)
         persistSoundPref(!on)
-        if (!on) playSound("praise")
+        if (on) stopSpeaking()
+        else playSound("praise")
       }}
     >
       {on ? "♪" : "✕"}

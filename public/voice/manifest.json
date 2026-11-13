@@ -1,123 +1,7 @@
 {
- "exact": {
-  "i am elias thorne. every opening book, every immortal game, every engine line all in here. you bring the hands.": [
-   "/voice/x00.m4a"
-  ],
-  "elias thorne here. the strongest player in existence is about to sit across from you. i'll make sure you survive, then thrive.": [
-   "/voice/x01.m4a"
-  ],
-  "welcome back. the machine waits. let's sharpen something today.": [
-   "/voice/x02.m4a"
-  ],
-  "1-minute mode vs a perfect engine? we're gaming tonight. premove everything the clock is your real enemy.": [
-   "/voice/x03.m4a"
-  ],
-  "claim the center, castle early, don't move a piece twice without cause the gospel. play.": [
-   "/voice/x04.m4a"
-  ],
-  "new war. i've eaten every opening book ever printed; you have one job surprise yourself.": [
-   "/voice/x05.m4a"
-  ],
-  "playable. but the sharper move existed file it for the report.": [
-   "/voice/x06.m4a"
-  ],
-  "okay. not what i'd have chosen, but nothing breaks.": [
-   "/voice/x07.m4a"
-  ],
-  "material is just a bookkeeping detail tal would trade anything for this initiative. snap it with purpose.": [
-   "/voice/x08.m4a"
-  ],
-  "take it. every capture is a promise you intend to keep.": [
-   "/voice/x09.m4a"
-  ],
-  "check the tap on the shoulder. make sure you're not just knocking politely.": [
-   "/voice/x10.m4a"
-  ],
-  "checking is asking a question. fischer never asked unless the answer ended the story.": [
-   "/voice/x11.m4a"
-  ],
-  "twenty seconds. breathe at the next move, not before.": [
-   "/voice/x12.m4a"
-  ],
-  "now it's a fight against the clock too flag-vs-blunder, choose your poison fast.": [
-   "/voice/x13.m4a"
-  ],
-  "take your time. the engine isn't rushing; neither should you.": [
-   "/voice/x14.m4a"
-  ],
-  "find the move that makes the engine pause one extra millisecond.": [
-   "/voice/x15.m4a"
-  ],
-  "chess is 99% technique, 1% imagination but the 1% votes first.": [
-   "/voice/x16.m4a"
-  ],
-  "the master lost a thousand games before he found his footwork. you're in good company.": [
-   "/voice/x17.m4a"
-  ],
-  "when in doubt: improve your worst piece. when certain: be twice as certain.": [
-   "/voice/x18.m4a"
-  ],
-  "tactics flow from a superior position. make the ground fertile, then harvest.": [
-   "/voice/x19.m4a"
-  ],
-  "a blunder is data wearing a costume. undress it in the report and it becomes strength.": [
-   "/voice/x20.m4a"
-  ],
-  "even swords. walking away whole from a perfect engine is a badge of a different shape.": [
-   "/voice/x21.m4a"
-  ],
-  "you beat the strongest engine alive. whatever nerves you had before this session delete them. this goes in the vault.": [
-   "/voice/x22.m4a"
-  ],
-  "he took something? recalculate safety or payback, pick a lane.": [
-   "/voice/x23.m4a"
-  ],
-  "you're checked. king first, counter later.": [
-   "/voice/x24.m4a"
-  ]
- },
  "cues": {
-  "praise_high:0": [
-   "/voice/c_praise_high_0.m4a"
-  ],
-  "praise_high:1": [
-   "/voice/c_praise_high_1.m4a"
-  ],
-  "praise_high:2": [
-   "/voice/c_praise_high_2.m4a"
-  ],
-  "praise:0": [
-   "/voice/c_praise_0.m4a"
-  ],
-  "praise:1": [
-   "/voice/c_praise_1.m4a"
-  ],
-  "warn:0": [
-   "/voice/c_warn_0.m4a"
-  ],
-  "warn:1": [
-   "/voice/c_warn_1.m4a"
-  ],
-  "fire:0": [
-   "/voice/c_fire_0.m4a"
-  ],
-  "fire:1": [
-   "/voice/c_fire_1.m4a"
-  ],
-  "warn_streak": [
-   "/voice/c_warn_streak.m4a"
-  ],
-  "fire_blunder": [
-   "/voice/c_fire_blunder.m4a"
-  ],
-  "end_calm:0": [
-   "/voice/c_end_calm_0.m4a"
-  ],
-  "end_calm:1": [
-   "/voice/c_end_calm_1.m4a"
-  ],
-  "end_calm:2": [
-   "/voice/c_end_calm_2.m4a"
+  "review_entry": [
+   "/voice/c_review_entry.m4a"
   ],
   "intro_hype": [
    "/voice/c_intro_hype.m4a"
@@ -127,45 +11,6 @@
   ],
   "intro_calm": [
    "/voice/c_intro_calm.m4a"
-  ],
-  "opening_clean": [
-   "/voice/c_opening_clean.m4a"
-  ],
-  "opening_slip": [
-   "/voice/c_opening_slip.m4a"
-  ],
-  "master_intro": [
-   "/voice/c_master_intro.m4a"
-  ],
-  "levelup": [
-   "/voice/c_levelup.m4a"
-  ],
-  "drill_intro": [
-   "/voice/c_drill_intro.m4a"
-  ],
-  "drill_book:0": [
-   "/voice/c_drill_book_0.m4a"
-  ],
-  "drill_book:1": [
-   "/voice/c_drill_book_1.m4a"
-  ],
-  "drill_book:2": [
-   "/voice/c_drill_book_2.m4a"
-  ],
-  "drill_slip": [
-   "/voice/c_drill_slip.m4a"
-  ],
-  "master_move:0": [
-   "/voice/c_master_move_0.m4a"
-  ],
-  "master_move:1": [
-   "/voice/c_master_move_1.m4a"
-  ],
-  "master_move:2": [
-   "/voice/c_master_move_2.m4a"
-  ],
-  "master_move:3": [
-   "/voice/c_master_move_3.m4a"
   ],
   "walk_brilliant": [
    "/voice/c_walk_brilliant.m4a"
@@ -193,6 +38,48 @@
   ],
   "walk_blunder": [
    "/voice/c_walk_blunder.m4a"
+  ],
+  "opening_clean": [
+   "/voice/c_opening_clean.m4a"
+  ],
+  "opening_slip": [
+   "/voice/c_opening_slip.m4a"
+  ],
+  "master_intro": [
+   "/voice/c_master_intro.m4a"
+  ],
+  "drill_intro": [
+   "/voice/c_drill_intro.m4a"
+  ],
+  "drill_book:0": [
+   "/voice/c_drill_book_0.m4a"
+  ],
+  "drill_book:1": [
+   "/voice/c_drill_book_1.m4a"
+  ],
+  "drill_book:2": [
+   "/voice/c_drill_book_2.m4a"
+  ],
+  "drill_slip": [
+   "/voice/c_drill_slip.m4a"
+  ],
+  "puzzle_correct": [
+   "/voice/c_puzzle_correct.m4a"
+  ],
+  "puzzle_wrong": [
+   "/voice/c_puzzle_wrong.m4a"
+  ],
+  "master_move:0": [
+   "/voice/c_master_move_0.m4a"
+  ],
+  "master_move:1": [
+   "/voice/c_master_move_1.m4a"
+  ],
+  "master_move:2": [
+   "/voice/c_master_move_2.m4a"
+  ],
+  "master_move:3": [
+   "/voice/c_master_move_3.m4a"
   ]
  }
 }

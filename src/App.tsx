@@ -8,6 +8,7 @@ import { BOT_TIERS, findTC, TIME_CONTROLS, TIME_CLASS_LABEL, type GameRecord, ty
 import { academyStats, loadGames, loadPrefs, savePrefs, deleteGame, type Prefs } from "./lib/store"
 import { ToastHost } from "./components/Coach"
 import { Sidebar } from "./components/Sidebar"
+import { preloadVoice } from "./lib/voice"
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("home")
@@ -27,6 +28,10 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.board = prefs.boardTheme || "green"
   }, [prefs.boardTheme])
+
+  useEffect(() => {
+    preloadVoice()
+  }, [])
 
   function updatePrefs(p: Partial<Prefs>) {
     const next = { ...prefs, ...p }
@@ -69,7 +74,7 @@ export default function App() {
   return (
     <div className="cc-app">
       <Sidebar mode={mode} onNav={(m) => setMode(m === "settings" ? "setup" : m)} coachName="You" />
-      <main className={`cc-main${mode === "play" ? " in-game" : ""}`}>
+      <main className={`cc-main mode-${mode}${mode === "play" ? " in-game" : ""}`}>
         {mode === "home" && (
           <HomeView
             games={games}
@@ -148,9 +153,9 @@ function SetupView({
   return (
     <div className="view setup-view">
       <div className="setup-card">
-        <h2 className="setup-title">CONFIGURE THE WAR</h2>
+        <h2 className="setup-title">Set up your game.</h2>
         <div className="setup-row">
-          <span className="setup-label">TIME FORMAT</span>
+          <span className="setup-label">TIME CONTROL</span>
           <div className="tc-grid">
             {classes.map((cls) => (
               <div key={cls} className="tc-group">
@@ -172,7 +177,7 @@ function SetupView({
           </div>
         </div>
         <div className="setup-row">
-          <span className="setup-label">YOUR SIDE</span>
+          <span className="setup-label">YOUR COLOR</span>
           <div className="seg">
             {(
               [
@@ -188,7 +193,7 @@ function SetupView({
           </div>
         </div>
         <div className="setup-row">
-          <span className="setup-label">ENGINE BRAIN</span>
+          <span className="setup-label">ENGINE STRENGTH</span>
           <div className="tier-list">
             {(Object.keys(BOT_TIERS) as (keyof typeof BOT_TIERS)[]).map((t) => (
               <button key={t} className={`tier-btn${prefs.botTier === t ? " on" : ""}`} onClick={() => updatePrefs({ botTier: t })}>
@@ -199,7 +204,7 @@ function SetupView({
           </div>
         </div>
         <div className="setup-row">
-          <span className="setup-label">DEEP BRAIN</span>
+          <span className="setup-label">THINKING TIME</span>
           <div className="seg">
             <button className={`seg-btn${prefs.deepThink ? " on" : ""}`} onClick={() => updatePrefs({ deepThink: true })}>
               YES · think longer
@@ -210,18 +215,18 @@ function SetupView({
           </div>
         </div>
         <div className="setup-row">
-          <span className="setup-label">COACH MODE</span>
+          <span className="setup-label">LIVE COACH</span>
           <div className="seg">
             <button className={`seg-btn${prefs.coachMode ? " on" : ""}`} onClick={() => updatePrefs({ coachMode: true })}>
-              ON · ELIAS calls your moves live
+              ON · Elias reacts in text
             </button>
             <button className={`seg-btn${!prefs.coachMode ? " on" : ""}`} onClick={() => updatePrefs({ coachMode: false })}>
-              OFF · silent engine
+              OFF · engine only
             </button>
           </div>
         </div>
         <div className="setup-row">
-          <span className="setup-label">BOARD THEME</span>
+          <span className="setup-label">BOARD PALETTE</span>
           <div className="seg">
             {(
               [
@@ -269,7 +274,7 @@ function SetupView({
               })
             }
           >
-            ⚔ {findTC(prefs.tcId).id} VS {BOT_TIERS[prefs.botTier].label}
+            Play {findTC(prefs.tcId).id} vs {BOT_TIERS[prefs.botTier].label}
           </button>
         </div>
       </div>

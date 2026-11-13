@@ -104,8 +104,8 @@ export function ReviewView({
   const [walkCat, setWalkCat] = useState("key")
   const [walkIdx, setWalkIdx] = useState(0)
   const [coachTone, setCoachTone] = useState<ReactionTone>("lore")
-  const [coachText, setCoachText] = useState<string>("Walking the game now — every position tells a story.")
-  const [coachKey, setCoachKey] = useState<string | null>(null)
+  const [coachText, setCoachText] = useState<string>("Let's go through this game one move at a time.")
+  const [coachKey, setCoachKey] = useState<string | null>("review_entry")
   useEffect(() => {
     speak(coachText, coachKey)
     return () => stopSpeaking()
@@ -392,7 +392,7 @@ export function ReviewView({
               <CoachAvatar size={44} />
               <div className="coach-id">
                 <div className="coach-name">ELIAS THORNE</div>
-                <div className="coach-tag">AFTER-ACTION FORGE</div>
+                <div className="coach-tag">GAME REVIEW COACH</div>
               </div>
             </div>
             <CoachBubble tone={coachTone} text={coachText} />

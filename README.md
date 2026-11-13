@@ -2,9 +2,9 @@
 
 **A chess app designed to take you to grandmaster — by making every game hyper-personalised, so you learn on the go.**
 
-You don't get better at chess by playing anonymous games. You get better when every move you make is graded, explained, and turned into a lesson — while you're still in the position. That's what this is: a full chess workspace where a max-strength Stockfish plays you, a grandmaster coach watches every move, narrates your game out loud, and walks you through exactly what to fix the moment it's over.
+You don't get better at chess by playing anonymous games. You get better when your decisions become lessons. Grandmaster Lab pairs a max-strength Stockfish opponent with a personal coach: Elias reacts in text while you play, then uses a natural neural voice to explain your review and training moves.
 
-![Play view](docs/screenshot-play.png)
+![Grandmaster Lab training dashboard](docs/dashboard-after.png)
 
 ## How it teaches you
 
@@ -23,6 +23,7 @@ You don't get better at chess by playing anonymous games. You get better when ev
 - **Openings Lab**: 145 validated ECO lines with instant book-move validation
 - Learn mode shows the expected move; Pro mode rejects slips
 - **Elias commentates every move you make in training** — book moves get called, slips get corrected, completed lines get celebrated
+- The Master Vault adds a short spoken insight as you step through each master move
 
 ### Every immortal is a lesson
 - **Master Vault**: Opera Game, Immortal Game, Byrne–Fischer 1956, Fischer–Spassky 1972 Game 6, Kasparov–Topalov 1999 — hand-verified scores
@@ -30,16 +31,16 @@ You don't get better at chess by playing anonymous games. You get better when ev
 
 ### Progress that compounds
 - XP, 11 rank titles (Pawn of the War Room → Thorne's Equal), 12 badges, Elo with peak tracking, cross-game classification history
-- Daily puzzle mined from the immortal games
+- Daily puzzle mined from the immortal games; Elias explains missed tries and reinforces the idea when you solve it
 
-![Home view](docs/screenshot-home.png)
+![Live play](docs/play-after.png)
 
 ## Stack
 
 - React 19 + TypeScript + Vite
 - [chess.js](https://github.com/jhlywa/chess.js) for rules
 - [Stockfish](https://github.com/nmrugg/stockfish.js) WASM in Web Workers (gameplay + a live coach probe)
-- Pre-rendered neural voice for the coach (Kokoro TTS, Apache-2.0 — 64 narrated clips), with the browser's speech synthesis as fallback; silent during live play, talking during review and training
+- Pre-rendered neural voice for the coach (Kokoro TTS, Apache-2.0 — 27 local narrated cues); silent during live play, speaking during review and all training with an animated avatar indicator
 - Hand-rolled board renderer (drag/click, premove arrows, animations, captured trays)
 - Everything persists in `localStorage` — no backend, no accounts, no telemetry
 
@@ -68,8 +69,8 @@ The browser suites need `npx playwright install chromium` once.
 - **Stockfish** — the engine, via [nmrugg/stockfish.js](https://github.com/nmrugg/stockfish.js) (GPL). Built by the Stockfish developers.
 - **Piece sets** — "Staunty" and "Companion" from the [Lichess open-source project](https://github.com/lichess-org/lila/tree/master/public/piece) (lichess.org). Non-commercial use with attribution; see the license notes in the lila repository.
 - **Move/capture sounds** — from the [Lichess sound set](https://github.com/lichess-org/lila/tree/master/public/sound/standard).
-- **Coach portrait** — AI-generated digital painting, produced with the open [Pollinations.ai](https://pollinations.ai) image API.
-- **Coach voice** — pre-rendered with [Kokoro TTS](https://github.com/hexgrad/kokoro) (Apache-2.0), British male `bm_fable` voice. Generation script: `scripts/gen_voice.py`.
+- **Coach portrait** — AI-generated 3D-style character render, produced with the open [Pollinations.ai](https://pollinations.ai) image API.
+- **Coach voice** — pre-rendered with [Kokoro TTS](https://github.com/hexgrad/kokoro) (Apache-2.0), British male `bm_george` voice. All 27 spoken cues are local; no browser TTS or cloud voice calls. Generation script: `scripts/gen_voice.py`.
 - **Noto Sans** — Google Fonts (OFL).
 - **chess.js** — BSD-2-Clause.
 

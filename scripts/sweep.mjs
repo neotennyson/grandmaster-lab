@@ -106,7 +106,7 @@ const run = async () => {
     movesAfterPremove,
   )
 
-  // ---------- chess.com control set only (no takeback/eraser/wisdom) ----------
+  // ---------- supported game controls (no takeback/eraser/wisdom) ----------
   await page.waitForTimeout(3600)
   const controls = await page.evaluate(() => {
     const texts = Array.from(document.querySelectorAll(".play-view button")).map((b) => b.textContent ?? "")
@@ -116,13 +116,13 @@ const run = async () => {
       takeback: texts.some((t) => /takeback/i.test(t)),
       draw: texts.some((t) => /draw/i.test(t)),
       resign: texts.some((t) => /resign/i.test(t)),
-      newGame: texts.some((t) => /new game/i.test(t)),
+      newGame: texts.some((t) => /rematch|new game/i.test(t)),
       flip: !!document.querySelector('.play-view [title="Flip board"]'),
     }
   })
   note(
     !controls.eraser && !controls.wisdom && !controls.takeback && controls.draw && controls.resign && controls.newGame && controls.flip,
-    "chess.com control set only",
+    "supported game controls only",
     JSON.stringify(controls),
   )
   const movesBeforeResign = (await lastMoves()).split(",").filter(Boolean).length

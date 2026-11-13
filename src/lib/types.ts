@@ -151,7 +151,7 @@ export function fmtClock(ms: number): string {
 export type EngineBotTier = "max" | "turbo" | "deep"
 
 export const BOT_TIERS: Record<EngineBotTier, { label: string; time: number; desc: string }> = {
-  max: { label: "GAMBIT MAX", time: 4000, desc: "Maximum strength. No mercy." },
-  turbo: { label: "GAMBIT TURBO", time: 1200, desc: "Full strength, fast hands." },
-  deep: { label: "GAMBIT DEEP", time: 10000, desc: "Maximum strength, long think." },
+  max: { label: "LAB MAX", time: 4000, desc: "Maximum strength. No mercy." },
+  turbo: { label: "LAB QUICK", time: 1200, desc: "Full strength, fast hands." },
+  deep: { label: "LAB DEEP", time: 10000, desc: "Maximum strength, long think." },
 }

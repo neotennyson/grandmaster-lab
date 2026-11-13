@@ -127,7 +127,7 @@ export function PlayView({
     if (lvlAfter > lvlBefore) {
       emit({ kind: "levelup", level: lvlAfter, title: TITLES[Math.min(lvlAfter, TITLES.length - 1)] })
       playSound("levelup")
-      say("hype", `LEVEL ${lvlAfter} — ${TITLES[Math.min(lvlAfter, TITLES.length - 1)]}. The student grows.`)
+      say("hype", `LEVEL ${lvlAfter} — ${TITLES[Math.min(lvlAfter, TITLES.length - 1)]}. Your practice is adding up.`)
     }
   }
 
@@ -624,9 +624,9 @@ export function PlayView({
 
   function toGameRecord(): GameRecord {
     const c = new Chess()
-    c.setHeader("Event", `Gambit ${tc.id} vs Engine`)
-    c.setHeader("White", settings.myColor === "w" ? "You" : "Gambit Engine")
-    c.setHeader("Black", settings.myColor === "b" ? "You" : "Gambit Engine")
+    c.setHeader("Event", `Grandmaster Lab ${tc.id} vs Engine`)
+    c.setHeader("White", settings.myColor === "w" ? "You" : "Grandmaster Lab Engine")
+    c.setHeader("Black", settings.myColor === "b" ? "You" : "Grandmaster Lab Engine")
     for (const m of state.hist) {
       try {
         c.move(m.san)
@@ -927,19 +927,19 @@ export function PlayView({
         <div className="cc-topbar">
           <button className="cc-topbtn" onClick={() => leaveTo("home")}>
             <span className="ico"><IconTarget size={21} /></span>
-            <span>Play</span>
+            <span>Home</span>
           </button>
           <button className="cc-topbtn" onClick={rematch}>
             <span className="ico"><IconPlusSquare size={21} /></span>
-            <span>New Game</span>
+            <span>Rematch</span>
           </button>
           <button className="cc-topbtn" onClick={() => leaveTo("home")}>
             <span className="ico"><IconBoard size={21} /></span>
-            <span>Games</span>
+            <span>Archive</span>
           </button>
           <button className="cc-topbtn" onClick={() => leaveTo("masters")}>
             <span className="ico"><IconUsers size={21} /></span>
-            <span>Players</span>
+            <span>Study</span>
           </button>
         </div>
         <div className="cc-tabs">

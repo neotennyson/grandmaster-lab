@@ -1,26 +1,32 @@
-# DESIGN BRIEF — Grandmaster Lab dashboard rework
+# Grandmaster Lab — Product Design System
 
-Goal: make the Home/dashboard look like a flagship product, not a fan project. The bar: something a top-tier design team (Claude Opus-class design taste) would ship.
+Grandmaster Lab is a chess training studio: play, review, study openings, and follow master games in one connected workspace. The interface uses familiar chess-product conventions while keeping its own identity, layout details, colors, copy, and artwork.
 
-## Current state
-- `src/views/HomeView.tsx` renders the dashboard: hero play panel, Game Review CTA, Daily Puzzle, right column (Elias card, Openings to Drill, Recent Games, Immortal of the Day), bottom stat tiles (Games Played, Last Accuracy, Primary Leak).
-- `src/index.css` is a single stylesheet (~5700+ lines) using the chess.com dark palette: page `#302E2B`, cards `#262522`, controls `#403E3B`, dim text `#B9B7B4`, accent greens (`#81b64c`, `#a9d474`), board `#ebecd0/#739552`.
-- Viewport target: desktop-first 1600px, but must not break at 1280–1920.
+## Visual direction
 
-## What "super f***ing cool" means here
-1. **Hierarchy**: one clear hero (resume/continue training), everything else subordinate. Today every panel has equal weight.
-2. **Depth**: layered surfaces (subtle gradients, inner borders, soft shadows on hover), not flat boxes with 1px borders everywhere.
-3. **Motion**: tasteful — hover lifts, number count-ups for stats, staggered card entrance (CSS only, no new deps).
-4. **Data with personality**: the stat tiles should read like a coach's diagnosis, not a spreadsheet — accuracy trend sparkline (inline SVG, no charts lib), primary-leak callout with the worst classification glyph.
-5. **The Elias card is the product**: bigger portrait presence, current title/rating as a headline, "today's mission" line pulled from weakest area.
+- **Palette:** warm charcoal surfaces, familiar chess green actions, quiet gray borders, amber for progress, ivory text.
+- **Character:** focused, editorial, premium training room—not an arcade, spreadsheet, or imitation of another platform.
+- **Signature details:** compact numbered navigation, the "Your Journey" rating card, Elias's 3D-style portrait with a speaking pulse, and progress cues woven into each activity.
+- **Motion:** short entrances, subtle hover lift, clear focus states, and reduced-motion support.
 
-## Constraints (hard)
-- React + TS + existing CSS architecture (single index.css, class-based, no Tailwind, no CSS-in-JS, no new npm deps).
-- Do not rename/remove classes exercised by `scripts/sweep.mjs` (22 checks) — `.qp-btn`, `.side-item`, `.coach-strip`, etc. must keep existing.
-- Keep the chess.com dark palette family and the existing component structure; rework layout + polish, don't rewrite logic.
-- Asset credits: portrait is `public/avatar/elias.jpg`, sounds/fonts per CREDITS.md.
-- GPL-3.0 repo, no external services.
+## Product surfaces
 
-## Acceptance
-- `npm run build` clean, `npx oxlint` 0 errors, `node scripts/sweep.mjs` 22/22.
-- Before/after screenshots of the dashboard at 1600px committed to `docs/`.
+- **Dashboard:** one prominent next action, quick time controls, personal coach focus, recent games, daily puzzle, opening drills, and progress summary.
+- **Live play:** generous board, player clocks, captured material, move list, contextual controls. Elias can react in text; live narration stays off.
+- **Game review:** accuracy and move-class report, eval graph, guided walkthrough, coach voice during the review.
+- **Practice:** daily puzzles, opening drills, and master games get contextual coach explanations after each move, with local Kokoro voice enabled for those sessions.
+- **Setup:** clear controls for time, color, engine strength, board palette, coach reactions, and review depth.
+
+## Implementation constraints
+
+- React + TypeScript + Vite; existing class-based CSS; no new runtime dependencies.
+- Preserve game rules, storage, engine behavior, keyboard navigation, and tested selectors such as `.qp-btn`, `.side-item`, `.cc-navbtn`, `.cc-tab`, `.end-banner`, and `.game-row`.
+- Keep responsive behavior usable on 390px phones through desktop widths; no horizontal overflow.
+- Use original Grandmaster Lab branding and original/openly licensed assets; do not copy third-party logos, proprietary artwork, or exact page layouts.
+
+## Verification
+
+- `npm run build`
+- `node scripts/sweep.mjs` — 22 browser interactions
+- `node scripts/leak-check.mjs`
+- Screenshots: `docs/dashboard-after.png`, `docs/play-after.png`, `docs/review-after.png`, `docs/openings-after.png`, `docs/vault-after.png`, `docs/reader-after.png`, `docs/setup-after.png`.

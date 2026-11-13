@@ -47,16 +47,16 @@ export function saveCoach(p: CoachProfile) {
 }
 
 export const TITLES = [
-  "PAWN OF THE WAR ROOM",
-  "NOVICE OF THORNE",
-  "INITIATE OF THE LINES",
-  "ADEPT OF THE CENTER",
-  "STEEL PAWN",
-  "STRATEGIST",
-  "TACTICIAN",
-  "STORMHAND",
-  "MASTER'S SHADOW",
-  "GRANDMASTER'S BLADE",
+  "NEW STUDENT",
+  "OPENING EXPLORER",
+  "TACTICS STUDENT",
+  "POSITION BUILDER",
+  "CLUB PLAYER",
+  "STRATEGIC PLAYER",
+  "TOURNAMENT PLAYER",
+  "EXPERT CANDIDATE",
+  "MASTER CANDIDATE",
+  "GRANDMASTER TRACK",
   "THORNE'S EQUAL",
 ]
 
@@ -92,18 +92,18 @@ export interface Badge {
 }
 
 export const BADGES: Badge[] = [
-  { id: "first_blood", name: "First Blood", desc: "You beat the engine. Once. Everything changes after this.", glyph: "⚔" },
-  { id: "untouchable", name: "Untouchable", desc: "A full game with zero blunders. Surgical.", glyph: "⛨" },
-  { id: "flow8", name: "Thorne's Flow", desc: "8 consecutive engine-grade moves in one game.", glyph: "❁" },
-  { id: "bullet_king", name: "Bullet King", desc: "Won a 1-minute war. Against the machine.", glyph: "⚡" },
-  { id: "blitz_hunter", name: "Blitz Hunter", desc: "Won a blitz game (5|0 or faster).", glyph: "⇶" },
-  { id: "ice_blood", name: "Ice Blood", desc: "Won a long-haul game (30 minutes or more).", glyph: "❄" },
-  { id: "bookworm", name: "Bookworm", desc: "Mastered 5 opening lines in the Lab.", glyph: "▣" },
-  { id: "scholars_eye", name: "Scholar's Eye", desc: "Opened your first full game review.", glyph: "◎" },
-  { id: "deep_diver", name: "Deep Diver", desc: "3 full reviews completed.", glyph: "⌘" },
-  { id: "immortal_reader", name: "Immortal Reader", desc: "Walked one of the immortal games to the final move.", glyph: "♜" },
-  { id: "the_comeback", name: "The Comeback", desc: "Won a game you were once losing badly.", glyph: "↻" },
-  { id: "kairos_equal", name: "Thorne's Equal", desc: "Reached the final title — the student meets the master.", glyph: "✸" },
+  { id: "first_blood", name: "First Engine Win", desc: "Beat the engine for the first time.", glyph: "⚔" },
+  { id: "untouchable", name: "Clean Game", desc: "Finish a full game without a blunder.", glyph: "⛨" },
+  { id: "flow8", name: "In Rhythm", desc: "Play eight strong moves in a row.", glyph: "❁" },
+  { id: "bullet_king", name: "Bullet Win", desc: "Win a one-minute game against the engine.", glyph: "⚡" },
+  { id: "blitz_hunter", name: "Blitz Win", desc: "Win a blitz game in five minutes or less.", glyph: "⇶" },
+  { id: "ice_blood", name: "Long Game", desc: "Win a game with a time control of thirty minutes or more.", glyph: "❄" },
+  { id: "bookworm", name: "Opening Scholar", desc: "Master five opening lines in the Lab.", glyph: "▣" },
+  { id: "scholars_eye", name: "First Review", desc: "Complete your first full game review.", glyph: "◎" },
+  { id: "deep_diver", name: "Review Habit", desc: "Complete three full game reviews.", glyph: "⌘" },
+  { id: "immortal_reader", name: "Master Game Reader", desc: "Study an immortal game through its final move.", glyph: "♜" },
+  { id: "the_comeback", name: "Comeback", desc: "Win after falling into a difficult position.", glyph: "↻" },
+  { id: "kairos_equal", name: "Thorne's Equal", desc: "Reach the final coaching rank.", glyph: "✸" },
 ]
 
 export function unlockBadges(profile: CoachProfile, ctx: {
@@ -170,58 +170,58 @@ export interface MoveVerdict {
 }
 
 const PRAISE_HIGH: CoachLine[] = mkPool("praise_high", [
-  ["hype", (v) => `That's chess from the atlas. ${v.combo} now in flow — I can't improve on ${v.mySAN}, and I don't try.`],
-  ["hype", (v) => `${v.mySAN}. Engine-grade. Streak: ${v.combo}. Keep the pressure like this and the machine starts doubting itself.`],
-  ["praise", (v) => `Best move on the board — flow ${v.combo}. This is the version of you I'm building.`],
+  ["hype", (v) => `Lovely find. ${v.combo} strong moves in a row — you're seeing the position clearly.`],
+  ["hype", (v) => `${v.mySAN}. Exactly right. Keep asking the position the same careful questions.`],
+  ["praise", () => `Best move on the board. That's a difficult idea to spot over the board.`],
 ])
 
 const PRAISE: CoachLine[] = mkPool("praise", [
-  ["praise", (v) => `${v.mySAN}? Clean. ${v.combo} strong in a row.`],
-  ["praise", (v) => `Solid linework. ${v.combo} clean cuts so far.`],
+  ["praise", (v) => `${v.mySAN}. Nice. You kept the position under control.`],
+  ["praise", () => `Good, purposeful play. Keep looking for your least active piece.`],
 ])
 
 const NEUTRAL: CoachLine[] = [
-  { tone: "note", text: () => `Playable. But the sharper move existed — file it for the report.` },
-  { tone: "note", text: () => `Okay. Not what I'd have chosen, but nothing breaks.` },
+  { tone: "note", text: () => `Playable, though there was a more active option. We'll compare them in the review.` },
+  { tone: "note", text: () => `That's solid. Nothing urgent changes in the position.` },
 ]
 
 const SOFT_WARN: CoachLine[] = mkPool("warn", [
-  ["warn", (v) => `Loose. ${v.bestSAN} would have gripped harder.`],
-  ["warn", (v) => `You slipped some pressure — the report will babble about ${v.bestSAN} anyway.`],
+  ["warn", (v) => `A little loose. ${v.bestSAN} would have held the position together.`],
+  ["warn", (v) => `You gave up some pressure. We'll compare it with ${v.bestSAN} afterward.`],
 ])
 
 const HARD_WARN: CoachLine[] = mkPool("fire", [
-  ["fire", (v) => `No. ${v.bestSAN} was the move. Park this one — the report will turn it into a lesson.`],
-  ["fire", (v) => `That leaks blood. The thread was ${v.bestSAN}. We will autopsy it after the game.`],
+  ["fire", (v) => `That misses the key idea. ${v.bestSAN} was stronger; we'll work through why in the review.`],
+  ["fire", (v) => `A difficult moment. ${v.bestSAN} was the safer way to meet the threat.`],
 ])
 
 const CAPTURES: CoachLine[] = [
-  { tone: "lore", text: () => `Material is just a bookkeeping detail — Tal would trade anything for this initiative. Snap it with purpose.` },
-  { tone: "praise", text: () => `Take it. Every capture is a promise you intend to keep.` },
+  { tone: "lore", text: () => `Before recapturing, check what changed for both kings and every loose piece.` },
+  { tone: "praise", text: () => `You took the piece. Now check whether the recapture helps your position.` },
 ]
 
 const CHECKS: CoachLine[] = [
-  { tone: "note", text: () => `Check — the tap on the shoulder. Make sure you're not just knocking politely.` },
-  { tone: "lore", text: () => `Checking is asking a question. Fischer never asked unless the answer ended the story.` },
+  { tone: "note", text: () => `Check. First list the king's safe squares, then look for your follow-up.` },
+  { tone: "lore", text: () => `A check is useful when it improves your position. What does this one threaten?` },
 ]
 
 const TIME_PRESSURE: CoachLine[] = [
-  { tone: "fire", text: () => `Twenty seconds. Breathe at the next move, not before.` },
-  { tone: "fire", text: () => `Now it's a fight against the clock too — flag-vs-blunder, choose your poison fast.` },
+  { tone: "fire", text: () => `Twenty seconds. Take one breath, then look for checks, captures, and threats.` },
+  { tone: "fire", text: () => `The clock is tight. Choose a safe move and keep the position playable.` },
 ]
 
 const BULLET_OPEN: CoachLine[] = [
-  { tone: "hype", text: () => `1-minute mode vs a perfect engine? We're gaming tonight. Premove everything — the clock is your real enemy.` },
+  { tone: "hype", text: () => `One minute against the engine. Keep it simple and trust your first good instinct.` },
 ]
 
 const OPENING_START: CoachLine[] = [
-  { tone: "lore", text: () => `Claim the center, castle early, don't move a piece twice without cause — the gospel. Play.` },
-  { tone: "hype", text: () => `New war. I've eaten every opening book ever printed; you have one job — surprise yourself.` },
+  { tone: "lore", text: () => `Start with the center and develop naturally. If anything looks strange, we'll review it afterward.` },
+  { tone: "hype", text: () => `A new game and a clean slate. Let's see what kind of position you build.` },
 ]
 
 const YOUR_TURN_HYPE: CoachLine[] = [
-  { tone: "calm", text: () => `Take your time. The engine isn't rushing; neither should you.` },
-  { tone: "hype", text: () => `Find the move that makes the engine pause one extra millisecond.` },
+  { tone: "calm", text: () => `Take your time. Look at what your least active piece could do.` },
+  { tone: "hype", text: () => `No rush. Find a move that improves your position, not just one that looks forcing.` },
 ]
 
 export interface GameEndCtx {
@@ -238,9 +238,9 @@ export function coachStart(ctx: { tcId: string }): CoachReaction {
 
 export function coachGreet(): string {
   return pick([
-    `I am Elias Thorne. Every opening book, every immortal game, every engine line — all in here. You bring the hands.`,
-    `Elias Thorne here. The strongest player in existence is about to sit across from you. I'll make sure you survive, then thrive.`,
-    `Welcome back. The machine waits. Let's sharpen something today.`,
+    `I'm Elias. I'll keep the game yours and help you see one thing more clearly each time.`,
+    `Good to see you. Play your game; we'll talk through the key moments afterward.`,
+    `Ready when you are. I'll be here for the review.`,
   ])
 }
 
@@ -257,12 +257,12 @@ export function coachOnYourMove(v: MoveVerdict, coachMode: boolean): CoachReacti
       return render(v.combo >= 3 ? pick(PRAISE) : pick(NEUTRAL), { mySAN: v.mySAN, combo: v.combo, bestSAN: v.bestSAN })
     if (v.cls === "inaccuracy") {
       return v.combo >= 3
-        ? { tone: "warn", key: "warn_streak", text: `Streak ends at ${v.combo}. ${v.bestSAN} kept it stronger — small cost.` }
+        ? { tone: "warn", key: "warn_streak", text: `Your run of strong moves pauses here. ${v.bestSAN} kept the position a little tighter.` }
         : render(pick(SOFT_WARN), { mySAN: v.mySAN, combo: v.combo, bestSAN: v.bestSAN })
     }
     if (v.cls === "mistake") return render(pick(HARD_WARN), { mySAN: v.mySAN, combo: 0, bestSAN: v.bestSAN })
     if (v.cls === "blunder")
-      return { tone: "fire", key: "fire_blunder", text: `Blunder — ${v.bestSAN} was the spine of the position. Hold steady; the report will make this a weapon.` }
+      return { tone: "fire", key: "fire_blunder", text: `A blunder. ${v.bestSAN} was stronger. Stay with it; we'll work through the idea in the review.` }
   } else {
     if (["brilliant", "great", "best"].includes(v.cls))
       return render(pick(PRAISE), { mySAN: v.mySAN, combo: v.combo, bestSAN: v.bestSAN })
@@ -275,50 +275,50 @@ export function coachOnYourMove(v: MoveVerdict, coachMode: boolean): CoachReacti
 export function coachOnBotMove(ctx: { isCapture: boolean; isCheck: boolean; timeLow: boolean; mvSAN: string }): CoachReaction | null {
   if (ctx.timeLow) return render(pick(TIME_PRESSURE))
   if (ctx.isCapture)
-    return { tone: "note", text: `He took something? Recalculate — safety or payback, pick a lane.` }
-  if (ctx.isCheck) return { tone: "note", text: `You're checked. King first, counter later.` }
+    return { tone: "note", text: `The engine took something. Check whether to recapture, defend, or create a threat.` }
+  if (ctx.isCheck) return { tone: "note", text: `You're in check. Find a safe king move first.` }
   if (Math.random() < 0.16) return render(pick(YOUR_TURN_HYPE))
   return null
 }
 
 export function coachOnEnd(ctx: GameEndCtx): CoachReaction {
   if (ctx.draw)
-    return { tone: "calm", text: `Even swords. Walking away whole from a perfect engine is a badge of a different shape.` }
+    return { tone: "calm", text: `A draw against the engine is useful practice. Let's review where the balance changed.` }
   if (ctx.won)
     return {
       tone: "hype",
-      text: `YOU beat the strongest engine alive. Whatever nerves you had before this session — delete them. This goes in the vault.`,
+      text: `You beat the engine. Congratulations—that's a real result. Let's see what worked and save the game.`,
     }
   const graded: CoachReaction =
     (ctx.myAcc ?? 0) >= 85
-      ? { tone: "calm", key: "end_calm:0", text: `You played at ${ctx.myAcc ?? "??"}% and still fell — that's the machine being the machine. We expand from here.` }
+      ? { tone: "calm", key: "end_calm:0", text: `You played at ${ctx.myAcc ?? "??"}% and still fell. The engine punished one detail; we'll find it together.` }
       : (ctx.myAcc ?? 0) >= 70
-        ? { tone: "calm", key: "end_calm:1", text: `${ctx.myAcc ?? "??"}% accuracy, real combat. The report is your gym — study one blunder only. Force: what did it punish?` }
-        : { tone: "calm", key: "end_calm:2", text: `Intense defeat — rich study material. Open the review; I'll mark every fault and we'll fix two today, not twenty.` }
+        ? { tone: "calm", key: "end_calm:1", text: `${ctx.myAcc ?? "??"}% accuracy. A competitive game. Let's pick one decision to improve next time.` }
+        : { tone: "calm", key: "end_calm:2", text: `Tough game. We'll focus on two positions that can make the biggest difference.` }
   return graded
 }
 
 export function coachOnReviewIntro(ctx: { acc: number; opening: string | null; worstCls: string }): CoachReaction {
   if (ctx.acc >= 90)
-    return { tone: "hype", key: "intro_hype", text: `${ctx.acc}% — clinical. ${ctx.opening ? `The ${ctx.opening} suited you.` : ""} Let's find the last 10%.` }
+    return { tone: "hype", key: "intro_hype", text: `${ctx.acc}%—excellent play. ${ctx.opening ? `Your ${ctx.opening} setup worked well.` : ""} Let's look for the small improvements.` }
   if (ctx.acc >= 75)
-    return { tone: "praise", key: "intro_praise", text: `${ctx.acc}%. A fighter's game. We fix ${ctx.worstCls === "blunder" ? "the blunders" : "the leaks"} and you're crossing 85 next time.` }
+    return { tone: "praise", key: "intro_praise", text: `${ctx.acc}%. A solid game. We'll look at ${ctx.worstCls === "blunder" ? "the blunder" : "the loose moves"} and find a better plan.` }
   if (ctx.acc >= 50)
-    return { tone: "praise", key: "intro_praise", text: `${ctx.acc}% — honest numbers. The report is your temple now; this is where you grow fastest.` }
+    return { tone: "praise", key: "intro_praise", text: `${ctx.acc}%. Honest numbers. This review is a chance to learn, not a verdict.` }
   return {
     tone: "calm",
     key: "intro_calm",
-    text: `${ctx.acc}%. That's a full book Ten days of study compressed into one score — walk the report with me, no shame in any of it.`,
+    text: `${ctx.acc}%. No shame in the score. Let's take the game move by move and find what you can improve.`,
   }
 }
 
 export function coachOnOpeningLine(ctx: { name: string; clean: boolean }): CoachReaction {
   if (!ctx.clean)
-    return { tone: "note", key: "opening_slip", text: `${ctx.name} — with slips. Run it again without my arrows; mastery is playing blind and still being right.` }
+    return { tone: "note", key: "opening_slip", text: `A few slips in ${ctx.name}. Let's repeat the line and make the ideas feel natural.` }
   return {
     tone: "hype",
     key: "opening_clean",
-    text: `${ctx.name}, clean. That line now lives in you — opponents will donate pieces to it.`,
+    text: `Clean run of ${ctx.name}. You remembered the main ideas.`,
   }
 }
 
@@ -326,7 +326,7 @@ export function coachOnMasterIntro(ctx: { title: string; players: string }): Coa
   return {
     tone: "lore",
     key: "master_intro",
-    text: `${ctx.title} — ${ctx.players}. On this board, every move is a philosophy. Watch where the pieces are sent, not just where they go.`,
+    text: `${ctx.title} — ${ctx.players}. Watch how they improve their pieces before starting an attack.`,
   }
 }
 
@@ -343,11 +343,11 @@ export function xpForGame(ctx: { won: boolean; draw: boolean; tcId: string }): n
 export function coachOnZen(xp: number): CoachReaction {
   void xp
   return { tone: "lore", text: pick([
-    `Chess is 99% technique, 1% imagination — but the 1% votes first.`,
-    `The master lost a thousand games before he found his footwork. You're in good company.`,
-    `When in doubt: improve your worst piece. When certain: be twice as certain.`,
-    `Tactics flow from a superior position. Make the ground fertile, then harvest.`,
-    `A blunder is data wearing a costume. Undress it in the report and it becomes strength.`,
+    `Sometimes the best move is simply a better square for your least active piece.`,
+    `When the position feels unclear, improve one of your pieces and see what changes.`,
+    `Good chess is a series of small questions. Take them one at a time.`,
+    `Tactics are easier to spot when your pieces are working together.`,
+    `A mistake is information. Understanding it makes the next game easier.`,
   ]) }
 }
 
@@ -355,23 +355,23 @@ export function coachDrillIntro(ctx: { name: string }): CoachReaction {
   return {
     tone: "lore",
     key: "drill_intro",
-    text: `The ${ctx.name}. Follow the arrows and play the book moves — I'll call every one.`,
+    text: `Let's practice ${ctx.name}. I'll explain what the line is doing, not just what to play.`,
   }
 }
 
 export function coachOnDrillMove(ctx: { san: string; correct: boolean; name: string }): CoachReaction {
   if (ctx.correct) {
     const variants: CoachReaction[] = [
-      { tone: "praise", key: "drill_book:0", text: `Book. ${ctx.san} — the theory approves.` },
-      { tone: "hype", key: "drill_book:1", text: `${ctx.san}. Exactly what the line wants. Keep the rhythm.` },
-      { tone: "praise", key: "drill_book:2", text: `Book move. ${ctx.name} is taking shape on the board.` },
+      { tone: "praise", key: "drill_book:0", text: `Right. ${ctx.san} is the main move here.` },
+      { tone: "hype", key: "drill_book:1", text: `${ctx.san}. Good. That keeps the line on track.` },
+      { tone: "praise", key: "drill_book:2", text: `Yes. Keep developing and maintain the pressure.` },
     ]
     return variants[Math.floor(Math.random() * variants.length)]
   }
   return {
     tone: "warn",
     key: "drill_slip",
-    text: `Off book. The line plays ${ctx.san} here — reset the pattern.`,
+    text: `Not quite. The line continues with ${ctx.san}. Try to see why it fits.`,
   }
 }
 
@@ -379,16 +379,16 @@ export function coachOnMasterMove(ctx: { san: string; ply: number; isCapture: bo
   const n = Math.ceil(ctx.ply / 2)
   const side = ctx.ply % 2 === 1 ? "White" : "Black"
   if (ctx.isMate)
-    return { tone: "fire", key: "master_move:3", text: `${side} mates with ${ctx.san} — study how every move before this drove it home.` }
+    return { tone: "fire", key: "master_move:3", text: `${side} finds mate with ${ctx.san}. Notice how little room the king has left.` }
   if (ctx.isCheck && ctx.isCapture)
-    return { tone: "hype", key: "master_move:2", text: `${n}. ${ctx.san} — a check that takes material. The old masters loved a double blow.` }
+    return { tone: "hype", key: "master_move:2", text: `${n}. ${ctx.san} — check and capture at once. Notice the two threats.` }
   if (ctx.isCapture)
-    return { tone: "lore", key: "master_move:1", text: `${n}. ${ctx.san} — material changes hands. Watch whether it was a trade or a theft.` }
+    return { tone: "lore", key: "master_move:1", text: `${n}. ${ctx.san}. Ask what each side gets from this exchange.` }
   if (ctx.isCheck)
-    return { tone: "note", key: "master_move:1", text: `${n}. ${ctx.san} — a question mark of a move. The answer comes two moves later; watch for it.` }
+    return { tone: "note", key: "master_move:1", text: `${n}. ${ctx.san}. Does this check help, or give the king a useful tempo?` }
   return {
     tone: "lore",
     key: `master_move:${ctx.ply % 2}`,
-    text: `${n}. ${ctx.san} — a quiet move doing loud work. Follow what it sets up.`,
+    text: `${n}. ${ctx.san}. What does this improve? Follow the piece it supports.`,
   }
 }

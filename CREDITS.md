@@ -15,12 +15,12 @@ Code in this repository is GPL-3.0 (see [LICENSE](LICENSE)). The bundled third-p
 
 ## Coach portrait
 
-- AI-generated digital painting produced with the open [Pollinations.ai](https://pollinations.ai) image API. Bundled locally at `public/avatar/elias.jpg`.
+- AI-generated 3D-style character portrait produced with the open [Pollinations.ai](https://pollinations.ai) image API. Bundled locally at `public/avatar/elias.jpg`.
 
 ## Coach voice
 
-- Pre-rendered with [Kokoro TTS](https://github.com/hexgrad/kokoro) (Apache-2.0), British male `bm_fable` voice. 64 narrated clips + `manifest.json` bundled locally at `public/voice/`. Regenerate with `scripts/gen_voice.py` (requires the Python `kokoro` package).
-- The browser's built-in speech synthesis (`speechSynthesis`) is the fallback for dynamic lines; no cloud calls are made at runtime.
+- Pre-rendered with [Kokoro TTS](https://github.com/hexgrad/kokoro) (Apache-2.0), British male `bm_george` voice. 27 narrated cues + `manifest.json` bundled locally at `public/voice/`.
+- All spoken feedback is served from local files; there is no browser TTS fallback or cloud voice call at runtime. Regenerate with `scripts/gen_voice.py` (requires the Python `kokoro` package and macOS `afconvert`).
 
 ## Chess engine
 

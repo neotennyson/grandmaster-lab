@@ -77,9 +77,27 @@ function MasterReader({ game, onBack }: { game: MasterGame; onBack: () => void }
   }, [game.pgn])
 
   const [idx, setIdx] = useState(0)
-  const [coachMsg, setCoachMsg] = useState<CoachReaction>(() =>
-    coachOnMasterIntro({ title: game.title, players: `${game.white} — ${game.black}` }),
-  )
+  const coachMsg = useMemo<CoachReaction>(() => {
+    const intro = coachOnMasterIntro({ title: game.title, players: `${game.white} — ${game.black}` })
+    if (idx === 0) return intro
+    const san = sans[idx - 1]
+    if (!san) return intro
+    const c = new Chess()
+    try {
+      for (let i = 0; i < idx - 1; i++) c.move(sans[i])
+      const move = c.move(san)
+      if (!move) return intro
+      return coachOnMasterMove({
+        san,
+        ply: idx,
+        isCapture: move.flags.includes("c") || move.flags.includes("e"),
+        isCheck: c.inCheck(),
+        isMate: c.isCheckmate(),
+      })
+    } catch {
+      return intro
+    }
+  }, [idx, sans, game.title, game.white, game.black])
   const [engine, setEngine] = useState<Engine | null>(null)
   const [analysing, setAnalysing] = useState(false)
   const [probe, setProbe] = useState<{ best: string; to: string; from: string; pv: string[]; cp: number } | null>(null)
@@ -89,40 +107,7 @@ function MasterReader({ game, onBack }: { game: MasterGame; onBack: () => void }
   useEffect(() => {
     speak(coachMsg.text, coachMsg.key)
     return () => stopSpeaking()
-  }, [coachMsg])
-
-  useEffect(() => {
-    if (idx === 0) {
-      const intro = coachOnMasterIntro({ title: game.title, players: `${game.white} — ${game.black}` })
-      setCoachMsg(intro)
-      return
-    }
-    const san = sans[idx - 1]
-    if (!san) return
-    const c = new Chess()
-    for (let i = 0; i < idx - 1; i++) {
-      try {
-        c.move(sans[i])
-      } catch {
-        return
-      }
-    }
-    let verbose: { flags: string; san: string } | null = null
-    try {
-      verbose = c.move(san) as unknown as { flags: string; san: string }
-    } catch {
-      return
-    }
-    if (!verbose) return
-    const r = coachOnMasterMove({
-      san,
-      ply: idx,
-      isCapture: verbose.flags.includes("c") || verbose.flags.includes("e"),
-      isCheck: verbose.flags.includes("+"),
-      isMate: verbose.flags.includes("#"),
-    })
-    setCoachMsg(r)
-  }, [idx, sans, game.title, game.white, game.black])
+  }, [coachMsg.text, coachMsg.key])
 
   useEffect(() => {
     visitedRef.current.add(idx)

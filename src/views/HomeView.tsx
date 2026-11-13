@@ -1,10 +1,9 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { Chess } from "chess.js"
 import { TIME_CONTROLS, TIME_CLASS_LABEL, type GameRecord, type TimeClass } from "../lib/types"
 import { academyStats, loadMastery, loadPlayer } from "../lib/store"
 import { CLASS_META, CLASS_SCORE_ORDER } from "../lib/types"
-import { MastersView } from "./MastersView"
-import { loadCoach, BADGES } from "../lib/coach"
+import { loadCoach, BADGES, TITLES, levelOf } from "../lib/coach"
 import { CoachAvatar, XpHud } from "../components/Coach"
 import { DailyPuzzle } from "../components/DailyPuzzle"
 import { openingFamilies } from "../lib/openings"
@@ -12,6 +11,7 @@ import { MASTER_GAMES } from "../lib/masters"
 import { IconBook, IconBoard, IconTarget, IconFlag } from "../components/icons"
 
 export type Mode = "home" | "setup" | "play" | "review" | "openings" | "masters"
+const TODAY_LABEL = new Intl.DateTimeFormat("en", { weekday: "long", month: "long", day: "numeric" }).format(Date.now())
 
 export function HomeView({
   games,
@@ -32,11 +32,18 @@ export function HomeView({
   onMasters: () => void
   onDelete: (id: string) => void
 }) {
-  const [tab] = useState<"hq" | "masters">("hq")
   const coach = loadCoach()
   const player = loadPlayer()
   const mastery = useMemo(() => loadMastery(), [])
   const classes: TimeClass[] = ["bullet", "blitz", "rapid", "classical"]
+  const accuracyTrail = games
+    .filter((g) => g.reviewed)
+    .slice(0, 8)
+    .reverse()
+    .map((g) => g.reviewed!.myAcc)
+  const focus = myStats.worstClass
+    ? `We'll turn your ${CLASS_META[myStats.worstClass.cls].label.toLowerCase()} into a strength.`
+    : "Play one game. I'll learn your patterns and find our first focus."
 
   const families = useMemo(() => {
     const fams = openingFamilies()
@@ -49,26 +56,37 @@ export function HomeView({
       .slice(0, 3)
   }, [mastery])
 
-  if (tab === "masters") {
-    return <MastersView />
-  }
-
   return (
     <div className="view home-view">
+      <header className="dashboard-head">
+        <div className="dashboard-welcome">
+          <div className="dashboard-eyebrow"><span className="status-pip" /> TRAINING HQ <span>· {TODAY_LABEL}</span></div>
+          <h1>Make your next move <em>count.</em></h1>
+          <p>Every game gives us something to work with. Let's find yours.</p>
+        </div>
+        <div className="dashboard-rating">
+          <span className="rating-glyph">♞</span>
+          <span className="rating-copy"><small>YOUR RATING</small><strong>{player.rating}</strong></span>
+          <span className="rating-caption">ELO</span>
+        </div>
+      </header>
+
       <div className="play-hero-grid">
         <div className="home-left">
-        <section className="panel play-panel">
+        <section className="panel play-panel featured-panel">
+          <div className="hero-watermark" aria-hidden="true">♞</div>
           <div className="play-panel-head">
             <div>
-              <h2 className="play-title">Play Chess</h2>
-              <p className="play-sub">The strongest engine on Earth. Pick your clock and go.</p>
+              <div className="hero-overline">PLAY · LEARN · REPEAT</div>
+              <h2 className="play-title">Take your seat.</h2>
+              <p className="play-sub">A full-strength opponent. A coach who studies every game with you.</p>
             </div>
             <div className="pp-actions">
               <button className="btn primary big" onClick={() => onQuickPlay("10|0")}>
-                ▶ Play
+                <span>▶</span> Start a game
               </button>
               <button className="btn ghost big" onClick={onStartGame}>
-                Play Bots
+                Customize
               </button>
             </div>
           </div>
@@ -100,9 +118,12 @@ export function HomeView({
 
         <section className="panel review-promo">
           <div className="rp-copy">
-            <div className="rp-title">Game Review</div>
+            <div className="rp-kicker">YOUR LAST GAME, DECODED</div>
+            <div className="rp-title">Find the lesson in every move.</div>
             <p className="rp-sub">
-              Every move graded Brilliant to Blunder, with the exact turning points marked. This is where the rating climbs.
+              {games.length
+                ? "Revisit the turning points, hear the reasoning, and carry one clear lesson into your next game."
+                : "Every move gets a label, a reason, and a better line to try next time."}
             </p>
             <button
               className="btn primary"
@@ -123,21 +144,23 @@ export function HomeView({
 
         <aside className="home-right">
           <section className="panel coach-card">
-            <div className="coach-row">
-              <CoachAvatar size={52} />
+            <div className="coach-card-head">
+              <CoachAvatar size={70} />
               <div className="coach-id">
-                <div className="coach-name">ELIAS THORNE</div>
-                <div className="coach-tag">YOUR GRANDMASTER</div>
+                <div className="coach-tag">YOUR TRAINING PARTNER</div>
+                <div className="coach-name">Elias Thorne</div>
+                <div className="coach-rank">{TITLES[Math.min(levelOf(coach?.xp ?? 0), TITLES.length - 1)]}</div>
               </div>
             </div>
             <p className="coach-quote">
-              "Every book, every immortal line, one voice. Play — I'll call your moves as they happen."
+              “I won't interrupt your game. When it ends, we'll look at every moment that mattered.”
             </p>
             <XpHud xp={coach?.xp ?? 0} />
+            <div className="coach-mission"><span className="mission-dot" /><span><b>TODAY'S FOCUS</b>{focus}</span></div>
             <div className="coach-mini">
-              <span>RATING {player.rating}</span>
-              <span>WINS {myStats.wins}</span>
-              <span>REVIEWED {myStats.reviewed}</span>
+              <span><b>{myStats.wins}</b> wins</span>
+              <span><b>{myStats.reviewed}</b> reviews</span>
+              <span><b>{myStats.avgAccuracy ? `${myStats.avgAccuracy}%` : "—"}</b> accuracy</span>
             </div>
           </section>
 
@@ -197,6 +220,10 @@ export function HomeView({
         </aside>
       </div>
 
+      <div className="section-heading">
+        <div><span className="dashboard-eyebrow">YOUR DEVELOPMENT</span><h2>Progress that compounds.</h2></div>
+        <span className="section-note">Built from your reviewed games</span>
+      </div>
       <div className="stat-row">
         <StatCard icon={<IconBoard size={20} />} label="GAMES PLAYED" value={`${myStats.games}`} note={`${myStats.wins}/${myStats.draws}/${myStats.losses} W/D/L`} />
         <StatCard
@@ -204,6 +231,7 @@ export function HomeView({
           label="LAST ACCURACY"
           value={myStats.lastAccuracy ? `${myStats.lastAccuracy}%` : "—"}
           note={myStats.avgAccuracy ? `avg ${myStats.avgAccuracy}%` : "review a game to fill this"}
+          trend={accuracyTrail}
         />
         <StatCard
           icon={<IconFlag size={20} />}
@@ -261,7 +289,7 @@ export function HomeView({
       <div className="archive panel">
         <div className="panel-head">GAME ARCHIVE</div>
         {games.length === 0 && (
-          <div className="rail-empty">No games yet. Wage your first war against the machine, then study the corpse of its position.</div>
+          <div className="rail-empty">Your games and reviews will appear here after your first match.</div>
         )}
         {games.map((g) => {
           const excerpt = firstMoves(g, 6)
@@ -295,7 +323,10 @@ export function HomeView({
   )
 }
 
-function StatCard({ icon, label, value, note }: { icon: React.ReactNode; label: string; value: string; note: string }) {
+function StatCard({ icon, label, value, note, trend = [] }: { icon: React.ReactNode; label: string; value: string; note: string; trend?: number[] }) {
+  const points = trend.length > 1
+    ? trend.map((n, i) => `${(i / (trend.length - 1)) * 80},${28 - Math.max(0, Math.min(100, n)) * 0.24}`).join(" ")
+    : ""
   return (
     <div className="stat-card">
       <span className="stat-ico">{icon}</span>
@@ -304,6 +335,7 @@ function StatCard({ icon, label, value, note }: { icon: React.ReactNode; label: 
         <div className="stat-label">{label}</div>
       </div>
       <div className="stat-note">{note}</div>
+      {points && <svg className="stat-sparkline" viewBox="0 0 80 30" aria-label="Recent accuracy trend"><polyline points={points} /></svg>}
     </div>
   )
 }
