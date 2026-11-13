@@ -57,6 +57,7 @@ npm run build      # production build in dist/
 ```bash
 node scripts/sweep.mjs             # 22 interaction tests in a real browser (Playwright)
 node scripts/leak-check.mjs        # memory/storage leak regression over full game cycles
+node scripts/review-check.mjs      # review severity sorting, sacrifice, and threat sanity checks
 node scripts/validate-openings.mjs # validate all ECO lines parse
 node scripts/validate-masters.mjs  # validate master game scores
 node tools/render-set.mjs <set>    # swap the piece set from tools/sets/<set>/*.svg

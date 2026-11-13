@@ -7223,6 +7223,19 @@ body {
 .puzzle-coach-bubble { flex: 1; min-width: 0; }
 .puzzle-coach-bubble > b { display: block; margin: 1px 0 5px; color: #a9d474; font-size: 8px; letter-spacing: 1.2px; }
 .puzzle-coach .coach-bubble { margin: 0; }
+.review-error {
+  max-width: 820px;
+  margin: 18px auto;
+  padding: 18px 20px;
+  border: 1px solid rgba(224, 75, 58, 0.38);
+  border-radius: 7px;
+  background: rgba(224, 75, 58, 0.09);
+  color: #f2d8d3;
+}
+.review-error b { color: #ffaaa0; }
+.review-error p { margin: 6px 0 0; color: #d3bbb5; font-size: 13px; line-height: 1.5; }
+.review-error-label { color: #ffaaa0; border-color: rgba(224, 75, 58, 0.35); }
+.review-grid.review-failed { display: none; }
 
 .rating-line {
   margin: 0;

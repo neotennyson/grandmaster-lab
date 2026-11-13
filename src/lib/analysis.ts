@@ -4,6 +4,7 @@ import { bookDepth, openingName } from "./openings"
 import type { MoveClass, PlyReview, ReviewReport } from "./types"
 
 export const PIECE_VALUE: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 }
+const PIECE_NAME: Record<string, string> = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" }
 
 export function winPct(whiteCp: number): number {
   const c = Math.max(-15000, Math.min(15000, whiteCp))
@@ -18,6 +19,14 @@ export function moveAccuracy(wpBefore: number, wpAfter: number): number {
 
 function povWp(whiteCp: number, color: "w" | "b"): number {
   return color === "w" ? winPct(whiteCp) : 100 - winPct(whiteCp)
+}
+
+export function winChanceDrop(p: Pick<PlyReview, "wpBefore" | "wpAfter">): number {
+  return Math.max(0, p.wpBefore - p.wpAfter)
+}
+
+export function sortByWinChanceDrop<T extends Pick<PlyReview, "wpBefore" | "wpAfter">>(plies: T[]): T[] {
+  return [...plies].sort((a, b) => winChanceDrop(b) - winChanceDrop(a))
 }
 
 export function uciToCoords(uci: string): { from: string; to: string; promotion?: "q" | "r" | "b" | "n" } {
@@ -59,68 +68,52 @@ function materialBalance(fen: string): { w: number; b: number } {
   return { w, b }
 }
 
-export function isSacrifice(fenAfter: string): boolean {
-  const c = new Chess(fenAfter)
-  if (c.isGameOver()) return false
-  for (const m of c.moves({ verbose: true })) {
-    if (!m.captured) continue
-    const recapture = maxRecapture(c, m)
-    if (PIECE_VALUE[m.captured] - recapture >= 2) return true
+export function isMoveSacrifice(fenBefore: string, move: Move): boolean {
+  if (move.captured || move.promotion) return false
+  const offered = new Chess(fenBefore).get(move.from)
+  if (!offered || PIECE_VALUE[offered.type] < 3) return false
+
+  const afterMove = new Chess(fenBefore)
+  try {
+    afterMove.move({ from: move.from, to: move.to, promotion: move.promotion })
+  } catch {
+    return false
+  }
+
+  for (const reply of afterMove.moves({ verbose: true })) {
+    if (reply.to !== move.to || !reply.captured) continue
+    const afterCapture = new Chess(afterMove.fen())
+    try {
+      afterCapture.move({ from: reply.from, to: reply.to, promotion: reply.promotion })
+    } catch {
+      continue
+    }
+    const canRecapture = afterCapture.moves({ verbose: true }).some((candidate) => candidate.to === reply.to && !!candidate.captured)
+    if (!canRecapture) return true
   }
   return false
-}
-
-function maxRecapture(chess: Chess, oppMove: Move): number {
-  try {
-    chess.move(oppMove)
-  } catch {
-    return 0
-  }
-  let best = 0
-  for (const r of chess.moves({ verbose: true })) {
-    if (!r.captured) continue
-    if (PIECE_VALUE[r.captured] > best) best = PIECE_VALUE[r.captured]
-  }
-  chess.undo()
-  return best
 }
 
 export function describeThreat(fenAfter: string): string | null {
   const c = new Chess(fenAfter)
   if (c.isGameOver()) return c.isCheckmate() ? "checkmate was already on the board" : null
-  let best = { san: "", value: -1, fork: false, mate: false, hanging: false }
-  for (const m of c.moves({ verbose: true })) {
-    let value = m.captured ? PIECE_VALUE[m.captured] : 0
-    if (m.san.includes("#")) best.mate = true
-    let fork = false
-    let hanging = false
+  const moves = c.moves({ verbose: true })
+  const mate = moves.find((move) => move.san.endsWith("#"))
+  if (mate) return `mate in one was available with ${mate.san}`
+
+  const captures = moves
+    .filter((move) => !!move.captured && PIECE_VALUE[move.captured] >= 3)
+    .sort((a, b) => PIECE_VALUE[b.captured!] - PIECE_VALUE[a.captured!])
+  for (const move of captures) {
+    const afterCapture = new Chess(fenAfter)
     try {
-      c.move(m)
-      const next = c.moves({ verbose: true })
-      const bigTargets = new Set(next.filter((x) => x.captured && PIECE_VALUE[x.captured] >= 3).map((x) => x.to))
-      if (bigTargets.size >= 2) fork = true
-      const mated = c.isCheckmate()
-      if (mated) best.mate = true
-      const enemy = c.turn()
-      const attacked = c.isAttacked(m.to, enemy)
-      if (value >= 3 && !attacked) hanging = true
-      c.undo()
-      if (mated) value = 10000
-      else if (fork) value = Math.max(value, 4)
-      else if (hanging) value = Math.max(value, 3.5)
+      afterCapture.move({ from: move.from, to: move.to, promotion: move.promotion })
     } catch {
       continue
     }
-    if (m.san.includes("#")) value = 10000
-    if (value > best.value) best = { san: m.san, value, fork, mate: best.mate || m.san.includes("#"), hanging }
+    const canRecapture = afterCapture.moves({ verbose: true }).some((reply) => reply.to === move.to && !!reply.captured)
+    if (!canRecapture) return `${move.san} wins the ${PIECE_NAME[move.captured!]}`
   }
-  if (best.mate && best.san) return `mate was in the air: ${best.san}`
-  if (best.value >= 9) return `${best.san} grabs the queen`
-  if (best.value >= 5) return `${best.san} wins a heavy piece`
-  if (best.fork) return `a fork was lurking: ${best.san} hits two pieces`
-  if (best.value >= 3) return `${best.san} wins a full piece`
-  if (best.value === 1) return `${best.san} just takes the pawn`
-  if (best.hanging) return `${best.san} grabs the loose piece`
   return null
 }
 
@@ -171,28 +164,28 @@ function commentFor(p: {
   const side = SIDE_NAME[p.color]
   switch (p.cls) {
     case "brilliant":
-      return `Brilliant! ${side} gives up material — the machine proves the attack: ${p.bestLineSANs.slice(0, 4).join(" ") || "the compensation is real"}.`
+      return `Brilliant sacrifice. The engine's continuation is ${p.bestLineSANs.slice(0, 4).join(" ") || p.bestSAN}.`
     case "great":
-      return `A rare "great move" — ${p.bestSAN} is the only sane move on the board.`
+      return `Strong move. The engine sees this as a particularly precise choice.`
     case "best":
-      return p.isMate ? "Checkmate, engine-approved." : `The engine's top choice. Nothing to improve.`
+      return p.isMate ? "Checkmate. The engine confirms there is no defense." : `Best move in this position, according to the engine.`
     case "excellent":
-      return `Practically identical to the engine pick (${p.bestSAN}).`
+      return `Very close to the top move. The engine's choice was ${p.bestSAN}.`
     case "good":
-      return `Solid. The engine prefers ${p.bestSAN}, but nothing damages your position.`
+      return `A sound move. The engine prefers ${p.bestSAN}, but your position remains playable.`
     case "book":
-      return `Book move — theory territory.`
+      return `This follows a known opening line.`
     case "forced":
-      return `The only legal move on the board.`
+      return `Only legal move. There was no decision to judge here.`
     case "inaccuracy":
-      return `${side} drifts: ${p.san} gives up a little ground. The engine wants ${p.bestSAN} instead.`
+      return `${side}'s move loses a little ground. ${p.bestSAN} keeps more of the advantage.`
     case "mistake": {
       const threat = describeThreat(p.fenAfter)
-      return `Mistake: ${p.san} is a step behind. The engine wants ${p.bestSAN}.${threat ? ` What you missed: ${threat}.` : ""}`
+      return `This changes the evaluation. The engine prefers ${p.bestSAN}.${threat ? ` The immediate point: ${threat}.` : " Check what your opponent can target next."}`
     }
     case "blunder": {
       const threat = describeThreat(p.fenAfter)
-      return `Blunder: ${p.san} wrecks ${side}'s position. The correction was ${p.bestSAN}.${threat ? ` What you missed: ${threat}.` : ""}`
+      return `This drops a lot of ground. ${p.bestSAN} was needed.${threat ? ` The immediate point: ${threat}.` : " Look for the opponent's strongest threat."}`
     }
     default:
       return ""
@@ -264,21 +257,20 @@ function freshCounts(): Record<MoveClass, { w: number; b: number }> {
 }
 
 function weightedAccuracy(list: PlyReview[]): number {
-  if (!list.length) return 0
-  const sum = list.reduce((s, p) => s + p.acc, 0)
-  return Math.round((sum / list.length) * 10) / 10
+  const choices = list.filter((p) => p.cls !== "forced")
+  if (!choices.length) return 0
+  const sum = choices.reduce((s, p) => s + p.acc, 0)
+  return Math.round((sum / choices.length) * 10) / 10
 }
 
 function avgLoss(list: PlyReview[], color: "w" | "b"): number {
-  const items = list.filter((p) => p.color === color)
+  const items = list.filter((p) => p.color === color && p.cls !== "forced")
   if (!items.length) return 0
   return Math.round((items.reduce((s, p) => s + p.lossCP, 0) / items.length) * 10) / 10
 }
 
 function topMoments(plies: PlyReview[], color: "w" | "b"): number[] {
-  return plies
-    .filter((p) => p.color === color && ["blunder", "mistake"].includes(p.cls))
-    .sort((a, b) => b.wpAfter - b.wpBefore - (a.wpAfter - a.wpBefore))
+  return sortByWinChanceDrop(plies.filter((p) => p.color === color && ["blunder", "mistake"].includes(p.cls)))
     .slice(0, 3)
     .map((p) => p.ply)
 }
@@ -351,7 +343,7 @@ export async function reviewGame(opts: ReviewOptions): Promise<ReviewReport> {
     const diff = turn === "w" ? bestScoreWhite - playedScoreWhite : playedScoreWhite - bestScoreWhite
     const lossCP = Math.max(0, diff)
 
-    const sacrifice = isSacrifice(fenAfter)
+    const sacrifice = isMoveSacrifice(fenBefore, playedM)
     const bookLen = bookDepth(sans.slice(0, i + 1))
     const playedIsBest = !!bestCoords && bestUCI === uci
     const cls = classify({

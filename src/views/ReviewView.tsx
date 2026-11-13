@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Chess } from "chess.js"
 import { Engine } from "../lib/engine"
-import { reviewGame, uciToCoords, pvToSANs, winPct } from "../lib/analysis"
+import { reviewGame, uciToCoords, pvToSANs, winPct, winChanceDrop, sortByWinChanceDrop } from "../lib/analysis"
 import type { AccuracyAgg } from "../lib/agg"
 import { CLASS_META, CLASS_SCORE_ORDER, BOT_TIERS, type PlyReview, type ReviewReport, type GameRecord, type MoveClass } from "../lib/types"
 import { patchGame } from "../lib/store"
@@ -19,13 +19,12 @@ function resultLabel(result: string): string {
   return "unfinished"
 }
 
-function formatAcc(a: number): string {
-  return a > 0 ? `${a.toFixed(1)}%` : "—"
+function formatAcc(a: number, hasMoves: boolean): string {
+  return hasMoves && Number.isFinite(a) ? `${a.toFixed(1)}%` : "—"
 }
 
-function fmtLoss(loss: number): string {
-  if (!loss) return "—"
-  return `${(loss / 100).toFixed(2)}`
+function fmtLoss(loss: number, hasMoves: boolean): string {
+  return hasMoves ? `${(loss / 100).toFixed(2)}` : "—"
 }
 
 function fmtEvalLabel(cp: number): string {
@@ -53,9 +52,24 @@ function moveRows(plies: PlyReview[]): { no: number; w?: PlyReview; b?: PlyRevie
   return rows
 }
 
+const REVIEW_CLASS_ORDER: MoveClass[] = [...CLASS_SCORE_ORDER, "forced"]
+
+const WALK_CATS: { id: string; label: string; classes: MoveClass[] }[] = [
+  { id: "key", label: "Key Moves", classes: ["brilliant", "great", "inaccuracy", "mistake", "blunder"] },
+  { id: "brilliant", label: "Brilliant", classes: ["brilliant"] },
+  { id: "great", label: "Great", classes: ["great"] },
+  { id: "best", label: "Best", classes: ["best"] },
+  { id: "excellent", label: "Excellent", classes: ["excellent"] },
+  { id: "good", label: "Good", classes: ["good"] },
+  { id: "book", label: "Book", classes: ["book"] },
+  { id: "inaccuracy", label: "Inaccuracy", classes: ["inaccuracy"] },
+  { id: "mistake", label: "Mistake", classes: ["mistake"] },
+  { id: "blunder", label: "Blunder", classes: ["blunder"] },
+]
+
 function aggregate(plies: PlyReview[]): AccuracyAgg {
   const counts = {} as Record<MoveClass, { w: number; b: number }>
-  for (const cls of CLASS_SCORE_ORDER) counts[cls] = { w: 0, b: 0 }
+  for (const cls of REVIEW_CLASS_ORDER) counts[cls] = { w: 0, b: 0 }
   let accW = 0
   let accB = 0
   let lossW = 0
@@ -64,6 +78,7 @@ function aggregate(plies: PlyReview[]): AccuracyAgg {
   let bCount = 0
   for (const p of plies) {
     counts[p.cls][p.color]++
+    if (p.cls === "forced") continue
     if (p.color === "w") {
       accW += p.acc
       lossW += p.lossCP
@@ -97,6 +112,7 @@ export function ReviewView({
   const patchedRef = useRef(false)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
   const [complete, setComplete] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
   const [report, setReport] = useState<ReviewReport | null>(null)
   const [plies, setPlies] = useState<PlyReview[]>([])
   const [plyIdx, setPlyIdx] = useState(0)
@@ -142,36 +158,36 @@ export function ReviewView({
         playSound("levelup")
       }
     }
+    const worstError = sortByWinChanceDrop(
+      rep.plies.filter((p) => p.color === game.myColor && ["blunder", "mistake", "inaccuracy"].includes(p.cls)),
+    )[0]
     const intro = coachOnReviewIntro({
       acc: game.myColor === "w" ? rep.accW : rep.accB,
       opening: rep.opening,
-      worstCls: rep.plies
-        .filter((p) => p.color === game.myColor && (p.cls === "blunder" || p.cls === "mistake"))
-        .sort((a, b) => b.wpAfter - b.wpBefore - (a.wpAfter - a.wpBefore))[0]?.cls ?? "inaccuracy",
+      worstCls: worstError?.cls ?? "inaccuracy",
     })
     setCoachTone(intro.tone)
     setCoachKey(intro.key ?? null)
     setCoachText(
       `${intro.text} • ${
         vocabLesson(rep, game.myColor) ??
-        "Nothing catastrophic in this one — polish the in-between moves and push for perfection."
+        "No major mistakes here. Let's look at a couple of quieter decisions."
       }`,
     )
   }
 
   function vocabLesson(rep: ReviewReport, myColor: "w" | "b"): string | null {
     const mine = rep.plies.filter(
-      (p) => p.color === myColor && (p.cls === "blunder" || p.cls === "mistake"),
+      (p) => p.color === myColor && ["blunder", "mistake", "inaccuracy"].includes(p.cls),
     )
-    const worst = mine.sort(
-      (a, b) => b.wpAfter - b.wpBefore - (a.wpAfter - a.wpBefore),
-    )[0]
+    const worst = sortByWinChanceDrop(mine)[0]
     if (!worst) return null
-    return `Lesson of the day: move ${Math.ceil(worst.ply / 2)}, ${worst.san}. Step there — the engine line drawn on the board is the cure, not shame.`
+    return `Let's revisit move ${Math.ceil(worst.ply / 2)}, ${worst.san}. Compare your move with the line on the board and see how the position changes.`
   }
 
   useEffect(() => {
     abortedRef.current = false
+    setReviewError(null)
     const engine = new Engine()
     engineRef.current = engine
     let alive = true
@@ -195,6 +211,10 @@ export function ReviewView({
         setReport(rep)
         setPlies(rep.plies)
         setComplete(true)
+        if (!rep.plies.length) {
+          setReviewError("This game has no moves to review.")
+          return
+        }
         if (!patchedRef.current) {
           patchedRef.current = true
           persistLearnings(rep, game)
@@ -205,7 +225,10 @@ export function ReviewView({
         }
       })
       .catch(() => {
-        if (alive) setComplete(true)
+        if (alive) {
+          setReviewError("The local engine couldn't finish this review. Return to the archive and reopen the game to retry.")
+          setComplete(true)
+        }
       })
     return () => {
       alive = false
@@ -242,19 +265,6 @@ export function ReviewView({
   const agg = useMemo(() => aggregate(donePlies), [donePlies])
   const bestPVSANs = current?.bestPV ? pvToSANs(current.fenBefore, current.bestPV, 6) : []
 
-  const WALK_CATS: { id: string; label: string; classes: MoveClass[] }[] = [
-    { id: "key", label: "Key Moves", classes: ["brilliant", "great", "inaccuracy", "mistake", "blunder"] },
-    { id: "brilliant", label: "Brilliant", classes: ["brilliant"] },
-    { id: "great", label: "Great", classes: ["great"] },
-    { id: "best", label: "Best", classes: ["best"] },
-    { id: "excellent", label: "Excellent", classes: ["excellent"] },
-    { id: "good", label: "Good", classes: ["good"] },
-    { id: "book", label: "Book", classes: ["book"] },
-    { id: "inaccuracy", label: "Inaccuracy", classes: ["inaccuracy"] },
-    { id: "mistake", label: "Mistake", classes: ["mistake"] },
-    { id: "blunder", label: "Blunder", classes: ["blunder"] },
-  ]
-
   const tourList = useMemo(() => {
     if (!report || !complete) return []
     const cats = WALK_CATS.find((c) => c.id === walkCat)?.classes ?? []
@@ -262,7 +272,6 @@ export function ReviewView({
   }, [report, complete, walkCat, game.myColor])
 
   useEffect(() => {
-    setWalkIdx(0)
     const first = tourList[0]
     if (first) speak(first.comment, `walk_${first.cls}`)
   }, [walkCat, tourList])
@@ -334,6 +343,8 @@ export function ReviewView({
               <div style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 3}%` }} />
             </div>
           </div>
+        ) : reviewError ? (
+          <div className="chip toggle-row review-error-label">Review unavailable</div>
         ) : (
           <div className="chip toggle-row">
             <button className={`btn ghost small on`}>Report ready</button>
@@ -346,7 +357,9 @@ export function ReviewView({
         )}
       </div>
 
-      <div className="review-grid">
+      {reviewError && <div className="review-error" role="alert"><b>Review unavailable</b><p>{reviewError}</p></div>}
+
+      <div className={`review-grid${reviewError ? " review-failed" : ""}`}>
         <div className="board-col">
           <div className="board-shell">
             <div className="eval-col">
@@ -402,11 +415,12 @@ export function ReviewView({
             <div className="acc-row">
               {[0, 1].map((i) => {
                 const side: "w" | "b" = i === 0 ? "w" : "b"
+                const hasDecision = donePlies.some((p) => p.color === side && p.cls !== "forced")
                 return (
                   <div key={side} className={`acc-card ${side}`}>
                     <div className="acc-name">{side === "w" ? "White" : "Black"}</div>
-                    <div className="acc-big">{formatAcc(side === "w" ? agg.accW : agg.accB)}</div>
-                    <div className="acc-avg">avg loss {fmtLoss(side === "w" ? agg.lossW : agg.lossB)}</div>
+                    <div className="acc-big">{formatAcc(side === "w" ? agg.accW : agg.accB, hasDecision)}</div>
+                    <div className="acc-avg">avg loss {fmtLoss(side === "w" ? agg.lossW : agg.lossB, hasDecision)}</div>
                   </div>
                 )
               })}
@@ -417,32 +431,33 @@ export function ReviewView({
                 <span className="rt-side">{game.myColor === "w" ? "You" : "White"}</span>
                 <span className="rt-side">{game.myColor === "b" ? "You" : "Black"}</span>
               </div>
-              {CLASS_SCORE_ORDER.map((cls) => {
-                const c = agg.counts[cls]
-                if (!c.w && !c.b) return null
-                const meta = CLASS_META[cls]
-                const mine = game.myColor === "w" ? c.w : c.b
-                return (
-                  <button
-                    key={cls}
-                    className={`rt-row${walkCat === cls ? " on" : ""}`}
-                    onClick={() => {
-                      setWalkCat(cls)
-                      setWalkIdx(0)
-                      const first = donePlies.find((p) => p.color === game.myColor && p.cls === cls)
-                      if (first) setPlyIdx(first.ply)
-                    }}
-                  >
-                    <span className="rt-glyph" style={{ color: meta.color, background: meta.bg }}>
-                      {meta.glyph}
-                    </span>
-                    <span className="rt-label">{meta.label}</span>
-                    <span className="rt-n">{c.w}</span>
-                    <span className="rt-n">{c.b}</span>
-                    <span className={`rt-mine${mine > 0 ? " has" : ""}`}>{mine > 0 ? `${mine} yours` : ""}</span>
-                  </button>
-                )
-              })}
+                {CLASS_SCORE_ORDER.map((cls) => {
+                  const c = agg.counts[cls]
+                  if (!c.w && !c.b) return null
+                  const meta = CLASS_META[cls]
+                  const mine = game.myColor === "w" ? c.w : c.b
+                  return (
+                    <button
+                      key={cls}
+                      className={`rt-row${walkCat === cls ? " on" : ""}`}
+                      onClick={() => {
+                        setWalkCat(cls)
+                        setWalkIdx(0)
+                        const first = donePlies.find((p) => p.color === game.myColor && p.cls === cls)
+                        if (first) setPlyIdx(first.ply)
+                        if (first && walkCat === cls) speak(first.comment, `walk_${first.cls}`)
+                      }}
+                    >
+                      <span className="rt-glyph" style={{ color: meta.color, background: meta.bg }}>
+                        {meta.glyph}
+                      </span>
+                      <span className="rt-label">{meta.label}</span>
+                      <span className="rt-n">{c.w}</span>
+                      <span className="rt-n">{c.b}</span>
+                      <span className={`rt-mine${mine > 0 ? " has" : ""}`}>{mine > 0 ? `${mine} yours` : ""}</span>
+                    </button>
+                  )
+                })}
             </div>
           </div>
 
@@ -461,6 +476,7 @@ export function ReviewView({
                         setWalkIdx(0)
                         const first = donePlies.find((p) => p.color === game.myColor && c.classes.includes(p.cls))
                         if (first) setPlyIdx(first.ply)
+                        if (first && walkCat === c.id) speak(first.comment, `walk_${first.cls}`)
                       }}
                     >
                       {c.label}
@@ -570,14 +586,14 @@ export function ReviewView({
             <div className="panel key-panel">
               <div className="panel-head">KEY MOMENTS · {game.myColor === "w" ? "WHITE" : "BLACK"}</div>
               <div className="key-list">
-                {donePlies
-                  .filter(
+                {sortByWinChanceDrop(
+                  donePlies.filter(
                     (p) =>
                       p.color === game.myColor &&
                       (p.cls === "blunder" || p.cls === "mistake" || (p.cls === "inaccuracy" && p.lossCP >= 120)) &&
-                      p.wpBefore - p.wpAfter >= 12,
-                  )
-                  .sort((a, b) => b.wpAfter - b.wpBefore - (a.wpAfter - a.wpBefore))
+                      winChanceDrop(p) >= 12,
+                  ),
+                )
                   .slice(0, 3)
                   .map((p) => {
                     const meta = CLASS_META[p.cls]
@@ -589,7 +605,7 @@ export function ReviewView({
                         <span className="key-san">
                           {Math.ceil(p.ply / 2)}. {p.san}
                         </span>
-                        <span className="key-loss">−{(p.wpBefore - p.wpAfter).toFixed(0)}%</span>
+                        <span className="key-loss">−{winChanceDrop(p).toFixed(0)}%</span>
                       </button>
                     )
                   })}
@@ -610,9 +626,7 @@ function persistLearnings(rep: ReviewReport, game: GameRecord) {
     if (n) countsMine[cls] = n
   }
   const mine = rep.plies.filter((p) => p.color === my)
-  const worst = mine
-    .slice()
-    .sort((a, b) => b.wpAfter - b.wpBefore - (a.wpAfter - a.wpBefore))[0]
+  const worst = sortByWinChanceDrop(mine.filter((p) => p.cls !== "forced"))[0]
   patchGame(game.id, {
     reviewed: {
       accW: rep.accW,

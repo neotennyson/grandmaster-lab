@@ -6,7 +6,7 @@ import { saveGame, newId, loadPlayer, applyGameRating } from "../lib/store"
 import { loadCoach, saveCoach } from "../lib/coach"
 import { Board } from "../components/Board"
 import { Piece } from "../components/pieces"
-import { isSacrifice, uciToCoords } from "../lib/analysis"
+import { isMoveSacrifice, uciToCoords } from "../lib/analysis"
 import { openingName } from "../lib/openings"
 import type { MoveClass } from "../lib/types"
 import {
@@ -408,7 +408,8 @@ export function PlayView({
       before.lines[0] && before.lines[1]
         ? Math.abs(scoreToWhiteCp(before.lines[0].score, mover) - scoreToWhiteCp(before.lines[1].score, mover))
         : null
-    const sacrifice = isSacrifice(fenAfter.fen())
+    const playedMove = fenAfter.history({ verbose: true }).at(-1)
+    const sacrifice = playedMove ? isMoveSacrifice(ctx.fenBefore, playedMove) : false
     let cls: MoveClass = "good"
     if (playedIsBest) {
       cls = sacrifice && lossCP <= 40 ? "brilliant" : secondGap !== null && secondGap >= 110 && lossCP <= 25 ? "great" : "best"
